@@ -1,6 +1,6 @@
 <?php
 require_once( 'db.php');
-require('config.php');
+require_once('config.php');
 if (array_key_exists('message',$_GET)) {
   $message = strip_tags($_GET['message']);
 } else {
@@ -11,6 +11,7 @@ if(!empty($_GET['submit']) && !empty($_GET['username'])) {
   if (is_numeric($_GET['username'])) {
     $message = 'I need a more sensible name to call you by.';
   } else {
+    // FIXME: We should transactionify account creation
     $user = UserQuery::create()->findOneByUsername($_GET['username']);
     if (is_null($user)) {
       $user = new User();
