@@ -1,0 +1,65 @@
+* {
+  font-family: sans-serif;
+}
+form {
+  font-size: larger;
+}
+img {  
+  border-style: none;
+}
+body {
+  background-color: #ac9d93;
+}
+h1 {
+  color: #abff00;
+}
+
+select.store{
+  width: 90%;
+}
+
+.submit {
+  color: #000;
+  background-color: #f4c545;
+  border-style: none;
+  font-weight: bold: 
+}
+
+.message {
+  color: red;
+  font-weight: bold;
+}
+
+input {
+  text-align: center;
+}
+div#login-box {
+  width: 300px;
+  padding: 10px;
+}
+
+
+input, select {
+  -moz-border-radius: 10px;
+  padding: 5px;
+}
+
+div#store-box {
+  text-align: left;
+  width: 300px;
+}
+
+table#purchase-controls td {
+  width: 50%;
+}
+table#purchase-controls {
+  margin-left: auto;
+  margin-right: auto;
+  width: 75%;
+  left: 15%;
+}
+table#admin {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}

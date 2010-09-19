@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="limbo3" defaultIdMethod="native">
+  <table name="user" phpName="User">
+    <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+    <column name="username" type="varchar" size="255" required="true" />
+    <unique>
+      <unique-column name="username" />
+    </unique>    
+    <column name="real_name" type="varchar" size="255" />
+    <column name="email" type="varchar" size="255" />
+    <column name="balance" type="double" required="true" default="0"/>
+    <column name="created" type="timestamp" defaultExpr="current_timestamp" />
+  </table>
+  
+  <table name="item" phpName="Item">
+    <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+    <column name="name" type="varchar" size="255" required="true" />
+    <column name="UPC" type ="varchar" size="255" />    
+    <column name="created" type="timestamp" defaultExpr="current_timestamp"/>
+  </table>
+  
+  <table name="stock" phpName="Stock">
+    <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+    <column name="item_id" type="integer" required="true" />
+    <column name="user_id" type="integer" required="true" />
+    <column name="price" type="double" required="true"/>
+    <column name="created" type="timestamp"  defaultExpr="current_timestamp"/>
+    <foreign-key foreignTable="item">
+      <reference local="item_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="user">
+      <reference local="user_id" foreign="id"/>
+    </foreign-key>
+    <index>
+      <index-column name="item_id" />
+    </index>
+    <column name="sold_out" type="boolean"  defaultValue="false" />
+    <column name="quantity" type="integer" required="true" />
+    <column name="sold" type="integer" required="true" defaultValue="0"/>
+  </table>
+  
+  <table name="purchase" phpName="Purchase">
+    <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+    <column name="user_id" type="integer" required="true" />
+    <column name="stock_id" type="integer" required="true"/>
+    <column name="item_id" type="integer" required="true"/>
+    <column name="quantity" type="integer" required="true" />
+    <column name="created" type="timestamp"  defaultExpr="current_timestamp"/>
+    <foreign-key foreignTable="user">
+      <reference local="user_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="stock">
+      <reference local="stock_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="item">
+      <reference local="item_id" foreign="id"/>
+    </foreign-key>
+    <index>
+      <index-column name="item_id" />
+    </index>
+  </table>
+  <table name="deposit" phpName="Deposit">
+    <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+    <column name="user_id" type="integer" required="true" />
+    <column name="amount" type="double" required="true" />
+  </table>
+  <table name="transfer" phpName="Transfer">
+    <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+    <column name="from" type="integer" required="true" />
+    <column name="to" type="integer" required="true"/>
+    <column name="amount" type="double" required="true" />
+    <column name="reason" type="varchar" size="255" defaultValue="" />
+    <column name="created" type="timestamp" defaultExpr="current_timestamp"/>
+    <foreign-key foreignTable="user">
+      <reference local="from" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="user">
+      <reference local="to" foreign="id"/>
+    </foreign-key>
+  </table>
+</database>
