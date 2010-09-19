@@ -38,4 +38,3 @@ function stock_suggest($q) {
 }
 
 ?>
-
