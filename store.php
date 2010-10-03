@@ -37,23 +37,24 @@ $(document).ready(function() {
 <tr>
 <td>
 <h2> Shelves </h2>
-<label for="item-search">I'd like me some </label> <input type="text" id="item-search" value="" autocomplete="off" autofocus tabindex="1"/>
+<label for="item-search">I'd like me some </label> <input type="text" id="item-search" value="" autocomplete="off" autofocus tabindex="1" onkeypress=”return event.keyCode!=13″
+/>
+<form method="post" action="api.php" onSubmit="$('select#cart option').attr('selected','selected');">
+<input type="hidden" name="action" value="purchase" />
+<input type="hidden" value="<?=$user->getId() ?>" name="acting_user" /> 
 </td>
 <td>
 <h2> Cart </h2>
 At a cost of $<span id="total">0.00</span>.
 <br />
 </td>
-<form method="post" action="api.php">
-<input type="hidden" name="action" value="purchase" />
-<input type="hidden" value="<?=$user->getId() ?>" name="acting_user" /> 
 <tr>
 <td>
 <select class="store"id="storefront" size="10">
 </select>
 </td>
 <td>
-<select class="store"  name="cart" id="cart" size="10">
+<select class="store"  name="cart[]" id="cart" size="10" multiple="multiple">
 </select>
 <br />
 </td>

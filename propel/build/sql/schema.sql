@@ -73,7 +73,8 @@ CREATE TABLE [purchase]
 	[stock_id] INTEGER  NOT NULL,
 	[item_id] INTEGER  NOT NULL,
 	[quantity] INTEGER  NOT NULL,
-	[created] TIMESTAMP default current_timestamp
+	[created] TIMESTAMP default current_timestamp,
+	[price] DOUBLE  NOT NULL
 );
 
 CREATE INDEX [purchase_I_1] ON [purchase] ([item_id]);

@@ -3,8 +3,8 @@ global $path;
 ?>
 <!DOCTYPE html>
 <html>
-<title>Limbo 3</title>
 <head>
+<title>Limbo 3</title>
 <link href="public/css/main.css" rel="stylesheet" type="text/css">
 <link href="public/css/autoSuggest.css" rel="stylesheet" type="text/css">
 <link href="public/css/jquery.autocomplete.css" rel="stylesheet" type="text/css">

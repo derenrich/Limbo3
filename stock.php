@@ -73,9 +73,9 @@ $(document).ready(function() {
     <tr>
     <td><?= $stock->getItem()->getName() ?> </td>
     <td><?= $stock->getCreated() ?> </td>
-    <td><?= $stock->getPrice() ?> </td>
+    <td><?= format_currency($stock->getPrice()) ?> </td>
     <td><?= $stock->getSold() ?>/<?=$stock->getQuantity() ?> </td>
-    <td><?= format_currency($stock->getPrice()) * $stock->getSold() ?></td>
+    <td><?= format_currency((double)($stock->getPrice() * $stock->getSold())) ?></td>
     </tr>
   <?php
   }

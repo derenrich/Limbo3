@@ -72,10 +72,50 @@ function transfer($from, $to, $amount) {
 }
 
 
-function purchase($user, $items, $quantity) {
+function purchase($user, $items) {
+  //transactional
+  //negative for withdraw
+  $con = Propel::getConnection(PurchasePeer::DATABASE_NAME);
+  $con->beginTransaction();
+  $total_price = 0;
+  try {
+    foreach($items as $item) {
+      $stock = $item[0];
+      $count = $item[1];
+      $item_obj = $stock->getItem();
+      $stock_quantity = $stock->getQuantity();
+      if ($stock_quantity < $count) {
+	// we don't have enough
+	throw new Exception("Not enough stock");
+      }
+      $purchase = new Purchase();
+      $purchase->setUser($user);
+      $purchase->setStockId($stock);
+      $purchase->setItemId($item_obj);
+      $purchase->setQuantity($count);
+      $cost = $stock->getPrice() * $count;
+      $purchase->setPrice($cost);
+      $purchase->save();
+      $stock->setSold($stock->getSold() + $count);
+      if ($stock->getQuantity() == $stock->getSold()) {
+	$stock->setSoldOut(true);
+      }
 
+      $stock->save();
+      $total_price += $cost;
+    }
+    // deal w/ the money
+    $user->setBalance($user->getBalance() - $total_price);
+    $user->save();
+    $owner = $stock->getUser();
+    $owner->setBalance($owner->getBalance() + $total_price);
+    $owner->save();
+    $con->commit();
+  } catch (Exception $e) {
+    var_dump($e);
+    $con->rollback();
+    return true;
+  }
+  return false;
 }
-
-
-
 ?>

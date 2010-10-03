@@ -12,6 +12,7 @@
  * @method     PurchaseQuery orderByItemId($order = Criteria::ASC) Order by the item_id column
  * @method     PurchaseQuery orderByQuantity($order = Criteria::ASC) Order by the quantity column
  * @method     PurchaseQuery orderByCreated($order = Criteria::ASC) Order by the created column
+ * @method     PurchaseQuery orderByPrice($order = Criteria::ASC) Order by the price column
  *
  * @method     PurchaseQuery groupById() Group by the id column
  * @method     PurchaseQuery groupByUserId() Group by the user_id column
@@ -19,6 +20,7 @@
  * @method     PurchaseQuery groupByItemId() Group by the item_id column
  * @method     PurchaseQuery groupByQuantity() Group by the quantity column
  * @method     PurchaseQuery groupByCreated() Group by the created column
+ * @method     PurchaseQuery groupByPrice() Group by the price column
  *
  * @method     PurchaseQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     PurchaseQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -45,6 +47,7 @@
  * @method     Purchase findOneByItemId(int $item_id) Return the first Purchase filtered by the item_id column
  * @method     Purchase findOneByQuantity(int $quantity) Return the first Purchase filtered by the quantity column
  * @method     Purchase findOneByCreated(string $created) Return the first Purchase filtered by the created column
+ * @method     Purchase findOneByPrice(double $price) Return the first Purchase filtered by the price column
  *
  * @method     array findById(int $id) Return Purchase objects filtered by the id column
  * @method     array findByUserId(int $user_id) Return Purchase objects filtered by the user_id column
@@ -52,6 +55,7 @@
  * @method     array findByItemId(int $item_id) Return Purchase objects filtered by the item_id column
  * @method     array findByQuantity(int $quantity) Return Purchase objects filtered by the quantity column
  * @method     array findByCreated(string $created) Return Purchase objects filtered by the created column
+ * @method     array findByPrice(double $price) Return Purchase objects filtered by the price column
  *
  * @package    propel.generator.limbo3.om
  */
@@ -331,6 +335,37 @@ abstract class BasePurchaseQuery extends ModelCriteria
 			}
 		}
 		return $this->addUsingAlias(PurchasePeer::CREATED, $created, $comparison);
+	}
+
+	/**
+	 * Filter the query on the price column
+	 * 
+	 * @param     double|array $price The value to use as filter.
+	 *            Accepts an associative array('min' => $minValue, 'max' => $maxValue)
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    PurchaseQuery The current query, for fluid interface
+	 */
+	public function filterByPrice($price = null, $comparison = null)
+	{
+		if (is_array($price)) {
+			$useMinMax = false;
+			if (isset($price['min'])) {
+				$this->addUsingAlias(PurchasePeer::PRICE, $price['min'], Criteria::GREATER_EQUAL);
+				$useMinMax = true;
+			}
+			if (isset($price['max'])) {
+				$this->addUsingAlias(PurchasePeer::PRICE, $price['max'], Criteria::LESS_EQUAL);
+				$useMinMax = true;
+			}
+			if ($useMinMax) {
+				return $this;
+			}
+			if (null === $comparison) {
+				$comparison = Criteria::IN;
+			}
+		}
+		return $this->addUsingAlias(PurchasePeer::PRICE, $price, $comparison);
 	}
 
 	/**

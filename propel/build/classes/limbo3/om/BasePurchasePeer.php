@@ -26,7 +26,7 @@ abstract class BasePurchasePeer {
 	const TM_CLASS = 'PurchaseTableMap';
 	
 	/** The total number of columns. */
-	const NUM_COLUMNS = 6;
+	const NUM_COLUMNS = 7;
 
 	/** The number of lazy-loaded columns. */
 	const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -49,6 +49,9 @@ abstract class BasePurchasePeer {
 	/** the column name for the CREATED field */
 	const CREATED = 'purchase.CREATED';
 
+	/** the column name for the PRICE field */
+	const PRICE = 'purchase.PRICE';
+
 	/**
 	 * An identiy map to hold any loaded instances of Purchase objects.
 	 * This must be public so that other peer classes can access this when hydrating from JOIN
@@ -65,12 +68,12 @@ abstract class BasePurchasePeer {
 	 * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
 	 */
 	private static $fieldNames = array (
-		BasePeer::TYPE_PHPNAME => array ('Id', 'UserId', 'StockId', 'ItemId', 'Quantity', 'Created', ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'userId', 'stockId', 'itemId', 'quantity', 'created', ),
-		BasePeer::TYPE_COLNAME => array (self::ID, self::USER_ID, self::STOCK_ID, self::ITEM_ID, self::QUANTITY, self::CREATED, ),
-		BasePeer::TYPE_RAW_COLNAME => array ('ID', 'USER_ID', 'STOCK_ID', 'ITEM_ID', 'QUANTITY', 'CREATED', ),
-		BasePeer::TYPE_FIELDNAME => array ('id', 'user_id', 'stock_id', 'item_id', 'quantity', 'created', ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+		BasePeer::TYPE_PHPNAME => array ('Id', 'UserId', 'StockId', 'ItemId', 'Quantity', 'Created', 'Price', ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'userId', 'stockId', 'itemId', 'quantity', 'created', 'price', ),
+		BasePeer::TYPE_COLNAME => array (self::ID, self::USER_ID, self::STOCK_ID, self::ITEM_ID, self::QUANTITY, self::CREATED, self::PRICE, ),
+		BasePeer::TYPE_RAW_COLNAME => array ('ID', 'USER_ID', 'STOCK_ID', 'ITEM_ID', 'QUANTITY', 'CREATED', 'PRICE', ),
+		BasePeer::TYPE_FIELDNAME => array ('id', 'user_id', 'stock_id', 'item_id', 'quantity', 'created', 'price', ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
 	);
 
 	/**
@@ -80,12 +83,12 @@ abstract class BasePurchasePeer {
 	 * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
 	 */
 	private static $fieldKeys = array (
-		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'UserId' => 1, 'StockId' => 2, 'ItemId' => 3, 'Quantity' => 4, 'Created' => 5, ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'userId' => 1, 'stockId' => 2, 'itemId' => 3, 'quantity' => 4, 'created' => 5, ),
-		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::USER_ID => 1, self::STOCK_ID => 2, self::ITEM_ID => 3, self::QUANTITY => 4, self::CREATED => 5, ),
-		BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'USER_ID' => 1, 'STOCK_ID' => 2, 'ITEM_ID' => 3, 'QUANTITY' => 4, 'CREATED' => 5, ),
-		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'user_id' => 1, 'stock_id' => 2, 'item_id' => 3, 'quantity' => 4, 'created' => 5, ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'UserId' => 1, 'StockId' => 2, 'ItemId' => 3, 'Quantity' => 4, 'Created' => 5, 'Price' => 6, ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'userId' => 1, 'stockId' => 2, 'itemId' => 3, 'quantity' => 4, 'created' => 5, 'price' => 6, ),
+		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::USER_ID => 1, self::STOCK_ID => 2, self::ITEM_ID => 3, self::QUANTITY => 4, self::CREATED => 5, self::PRICE => 6, ),
+		BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'USER_ID' => 1, 'STOCK_ID' => 2, 'ITEM_ID' => 3, 'QUANTITY' => 4, 'CREATED' => 5, 'PRICE' => 6, ),
+		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'user_id' => 1, 'stock_id' => 2, 'item_id' => 3, 'quantity' => 4, 'created' => 5, 'price' => 6, ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
 	);
 
 	/**
@@ -163,6 +166,7 @@ abstract class BasePurchasePeer {
 			$criteria->addSelectColumn(PurchasePeer::ITEM_ID);
 			$criteria->addSelectColumn(PurchasePeer::QUANTITY);
 			$criteria->addSelectColumn(PurchasePeer::CREATED);
+			$criteria->addSelectColumn(PurchasePeer::PRICE);
 		} else {
 			$criteria->addSelectColumn($alias . '.ID');
 			$criteria->addSelectColumn($alias . '.USER_ID');
@@ -170,6 +174,7 @@ abstract class BasePurchasePeer {
 			$criteria->addSelectColumn($alias . '.ITEM_ID');
 			$criteria->addSelectColumn($alias . '.QUANTITY');
 			$criteria->addSelectColumn($alias . '.CREATED');
+			$criteria->addSelectColumn($alias . '.PRICE');
 		}
 	}
 

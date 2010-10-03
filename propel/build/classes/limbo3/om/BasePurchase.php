@@ -14,7 +14,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	/**
 	 * Peer class name
 	 */
-  const PEER = 'PurchasePeer';
+	const PEER = 'PurchasePeer';
 
 	/**
 	 * The Peer class.
@@ -60,6 +60,12 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	 * @var        string
 	 */
 	protected $created;
+
+	/**
+	 * The value for the price field.
+	 * @var        double
+	 */
+	protected $price;
 
 	/**
 	 * @var        User
@@ -191,6 +197,16 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		} else {
 			return $dt->format($format);
 		}
+	}
+
+	/**
+	 * Get the [price] column value.
+	 * 
+	 * @return     double
+	 */
+	public function getPrice()
+	{
+		return $this->price;
 	}
 
 	/**
@@ -355,6 +371,26 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	} // setCreated()
 
 	/**
+	 * Set the value of [price] column.
+	 * 
+	 * @param      double $v new value
+	 * @return     Purchase The current object (for fluent API support)
+	 */
+	public function setPrice($v)
+	{
+		if ($v !== null) {
+			$v = (double) $v;
+		}
+
+		if ($this->price !== $v) {
+			$this->price = $v;
+			$this->modifiedColumns[] = PurchasePeer::PRICE;
+		}
+
+		return $this;
+	} // setPrice()
+
+	/**
 	 * Indicates whether the columns in this object are only set to default values.
 	 *
 	 * This method can be used in conjunction with isModified() to indicate whether an object is both
@@ -392,6 +428,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 			$this->item_id = ($row[$startcol + 3] !== null) ? (int) $row[$startcol + 3] : null;
 			$this->quantity = ($row[$startcol + 4] !== null) ? (int) $row[$startcol + 4] : null;
 			$this->created = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
+			$this->price = ($row[$startcol + 6] !== null) ? (double) $row[$startcol + 6] : null;
 			$this->resetModified();
 
 			$this->setNew(false);
@@ -400,7 +437,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 				$this->ensureConsistency();
 			}
 
-			return $startcol + 6; // 6 = PurchasePeer::NUM_COLUMNS - PurchasePeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 7; // 7 = PurchasePeer::NUM_COLUMNS - PurchasePeer::NUM_LAZY_LOAD_COLUMNS).
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating Purchase object", $e);
@@ -470,7 +507,6 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		$this->hydrate($row, 0, true); // rehydrate
 
 		if ($deep) {  // also de-associate any related objects?
-
 			$this->aUser = null;
 			$this->aStock = null;
 			$this->aItem = null;
@@ -495,7 +531,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if ($con === null) {
 			$con = Propel::getConnection(PurchasePeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
 		}
-		
+
 		$con->beginTransaction();
 		try {
 			$ret = $this->preDelete($con);
@@ -537,7 +573,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if ($con === null) {
 			$con = Propel::getConnection(PurchasePeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
 		}
-		
+
 		$con->beginTransaction();
 		$isInsert = $this->isNew();
 		try {
@@ -779,6 +815,9 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 			case 5:
 				return $this->getCreated();
 				break;
+			case 6:
+				return $this->getPrice();
+				break;
 			default:
 				return null;
 				break;
@@ -792,7 +831,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	 * type constants.
 	 *
 	 * @param     string  $keyType (optional) One of the class type constants BasePeer::TYPE_PHPNAME, BasePeer::TYPE_STUDLYPHPNAME,
-	 *                    BasePeer::TYPE_COLNAME, BasePeer::TYPE_FIELDNAME, BasePeer::TYPE_NUM. 
+	 *                    BasePeer::TYPE_COLNAME, BasePeer::TYPE_FIELDNAME, BasePeer::TYPE_NUM.
 	 *                    Defaults to BasePeer::TYPE_PHPNAME.
 	 * @param     boolean $includeLazyLoadColumns (optional) Whether to include lazy loaded columns. Defaults to TRUE.
 	 * @param     boolean $includeForeignObjects (optional) Whether to include hydrated related objects. Default to FALSE.
@@ -809,6 +848,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 			$keys[3] => $this->getItemId(),
 			$keys[4] => $this->getQuantity(),
 			$keys[5] => $this->getCreated(),
+			$keys[6] => $this->getPrice(),
 		);
 		if ($includeForeignObjects) {
 			if (null !== $this->aUser) {
@@ -869,6 +909,9 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 			case 5:
 				$this->setCreated($value);
 				break;
+			case 6:
+				$this->setPrice($value);
+				break;
 		} // switch()
 	}
 
@@ -899,6 +942,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if (array_key_exists($keys[3], $arr)) $this->setItemId($arr[$keys[3]]);
 		if (array_key_exists($keys[4], $arr)) $this->setQuantity($arr[$keys[4]]);
 		if (array_key_exists($keys[5], $arr)) $this->setCreated($arr[$keys[5]]);
+		if (array_key_exists($keys[6], $arr)) $this->setPrice($arr[$keys[6]]);
 	}
 
 	/**
@@ -916,6 +960,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if ($this->isColumnModified(PurchasePeer::ITEM_ID)) $criteria->add(PurchasePeer::ITEM_ID, $this->item_id);
 		if ($this->isColumnModified(PurchasePeer::QUANTITY)) $criteria->add(PurchasePeer::QUANTITY, $this->quantity);
 		if ($this->isColumnModified(PurchasePeer::CREATED)) $criteria->add(PurchasePeer::CREATED, $this->created);
+		if ($this->isColumnModified(PurchasePeer::PRICE)) $criteria->add(PurchasePeer::PRICE, $this->price);
 
 		return $criteria;
 	}
@@ -982,6 +1027,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		$copyObj->setItemId($this->item_id);
 		$copyObj->setQuantity($this->quantity);
 		$copyObj->setCreated($this->created);
+		$copyObj->setPrice($this->price);
 
 		$copyObj->setNew(true);
 		$copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1064,11 +1110,11 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if ($this->aUser === null && ($this->user_id !== null)) {
 			$this->aUser = UserQuery::create()->findPk($this->user_id, $con);
 			/* The following can be used additionally to
-			   guarantee the related object contains a reference
-			   to this object.  This level of coupling may, however, be
-			   undesirable since it could result in an only partially populated collection
-			   in the referenced object.
-			   $this->aUser->addPurchases($this);
+				 guarantee the related object contains a reference
+				 to this object.  This level of coupling may, however, be
+				 undesirable since it could result in an only partially populated collection
+				 in the referenced object.
+				 $this->aUser->addPurchases($this);
 			 */
 		}
 		return $this->aUser;
@@ -1113,11 +1159,11 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if ($this->aStock === null && ($this->stock_id !== null)) {
 			$this->aStock = StockQuery::create()->findPk($this->stock_id, $con);
 			/* The following can be used additionally to
-			   guarantee the related object contains a reference
-			   to this object.  This level of coupling may, however, be
-			   undesirable since it could result in an only partially populated collection
-			   in the referenced object.
-			   $this->aStock->addPurchases($this);
+				 guarantee the related object contains a reference
+				 to this object.  This level of coupling may, however, be
+				 undesirable since it could result in an only partially populated collection
+				 in the referenced object.
+				 $this->aStock->addPurchases($this);
 			 */
 		}
 		return $this->aStock;
@@ -1162,11 +1208,11 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		if ($this->aItem === null && ($this->item_id !== null)) {
 			$this->aItem = ItemQuery::create()->findPk($this->item_id, $con);
 			/* The following can be used additionally to
-			   guarantee the related object contains a reference
-			   to this object.  This level of coupling may, however, be
-			   undesirable since it could result in an only partially populated collection
-			   in the referenced object.
-			   $this->aItem->addPurchases($this);
+				 guarantee the related object contains a reference
+				 to this object.  This level of coupling may, however, be
+				 undesirable since it could result in an only partially populated collection
+				 in the referenced object.
+				 $this->aItem->addPurchases($this);
 			 */
 		}
 		return $this->aItem;
@@ -1183,6 +1229,7 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		$this->item_id = null;
 		$this->quantity = null;
 		$this->created = null;
+		$this->price = null;
 		$this->alreadyInSave = false;
 		$this->alreadyInValidation = false;
 		$this->clearAllReferences();

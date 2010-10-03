@@ -43,6 +43,7 @@ class PurchaseTableMap extends TableMap {
 		$this->addForeignKey('ITEM_ID', 'ItemId', 'INTEGER', 'item', 'ID', true, null, null);
 		$this->addColumn('QUANTITY', 'Quantity', 'INTEGER', true, null, null);
 		$this->addColumn('CREATED', 'Created', 'TIMESTAMP', false, null, 'current_timestamp');
+		$this->addColumn('PRICE', 'Price', 'DOUBLE', true, null, null);
 		// validators
 	} // initialize()
 

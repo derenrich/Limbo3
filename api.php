@@ -35,7 +35,24 @@ switch($action){
     $error = deposit($acting_user, -$amount);
     break;
   case 'purchase':
-    
+    // we need a count of each id
+    $cart = $_POST['cart'];
+    $items = array();
+    foreach($cart as $item) {
+      $item_id = (int) $item;
+      if($items[$item_id] == null) {
+	$items[$item_id] = 1;
+      } else {
+	$items[$item_id] += 1;
+      }
+    }
+    // convert these ids to stocks
+    $stock_count = array();
+    foreach($items as $stock_id => $count) {
+      $stock = StockQuery::create()->findOneById($stock_id);
+      $stock_count[] = array($stock, $count);
+    }
+    $error = purchase($acting_user,$stock_count);
     break;
   default:
     echo "Invalid action";
@@ -43,7 +60,7 @@ switch($action){
 }
 
 if ($error) {
-  
+  redirect("ERROR: Your transaction was canceled. Please try again.");
 } else {
   redirect();
 }

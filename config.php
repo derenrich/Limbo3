@@ -2,9 +2,9 @@
 
 global $path, $domain;
 $path = "/limbo3/";
-$domain = "http://localhost";
+$domain = "http://blacker.caltech.edu";
 
-function redirect($message, $page='') {
+function redirect($message='', $page='') {
   global $domain, $path;
   $message = urlencode($message);
   header( "Location: $domain$path$page?message=$message" ) ;
