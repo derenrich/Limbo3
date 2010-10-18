@@ -39,19 +39,29 @@ function deposit($user, $amount) {
   $con = Propel::getConnection(UserPeer::DATABASE_NAME);
   $con->beginTransaction();
   try {
-    // remove the amount from $fromAccount
-    $user->setBalance($user->getBalance() + $amount);
+    $new_balance = $user->getBalance() + $amount;
+    $user->setBalance($new_balance);
     $user->save($con);
+    $d = new Deposit();	
+    $d->setUser($user);
+    $d->setAmount($amount);
+    $d->save($con);
+    $bl = new BalanceLog();
+    $bl->setUser($user);
+    $bl->setNewBalance($new_balance);
+    $bl->setDeposit($d);
+    $bl->save($con);
     $con->commit();
   } catch (Exception $e) {
     $con->rollback();
+    throw $e;
     return true;
   }
   return false;
 }
 
 
-function transfer($from, $to, $amount) {
+function transfer($from, $to, $amount,$reason) {
   //transactional
   //negative for withdraw
   $con = Propel::getConnection(UserPeer::DATABASE_NAME);
@@ -62,6 +72,26 @@ function transfer($from, $to, $amount) {
     $from->save($con);
     $to->setBalance($to->getBalance() + $amount);
     $to->save($con);
+
+    $trans = new Transfer();
+    $trans->setUserFrom($from);
+    $trans->setUserTo($to);
+    $trans->SetReason($reason);
+    $trans->SetAmount($amount);
+    $trans->save($con);
+
+    $bl = new BalanceLog();
+    $bl->setUser($from);
+    $bl->setNewBalance($from->getBalance());
+    $bl->setTransfer($trans);
+    $bl->save($con);
+
+    $bl = new BalanceLog();
+    $bl->setUser($to);
+    $bl->setNewBalance($to->getBalance());
+    $bl->setTransfer($trans);
+    $bl->save($con);
+
     $con->commit();
   } catch (Exception $e) {
     $con->rollback();
@@ -83,15 +113,15 @@ function purchase($user, $items) {
       $stock = $item[0];
       $count = $item[1];
       $item_obj = $stock->getItem();
-      $stock_quantity = $stock->getQuantity();
+      $stock_quantity = $stock->getQuantity() - $stock->getSold();
       if ($stock_quantity < $count) {
 	// we don't have enough
 	throw new Exception("Not enough stock");
       }
       $purchase = new Purchase();
       $purchase->setUser($user);
-      $purchase->setStockId($stock);
-      $purchase->setItemId($item_obj);
+      $purchase->setStock($stock);
+      $purchase->setItem($item_obj);
       $purchase->setQuantity($count);
       $cost = $stock->getPrice() * $count;
       $purchase->setPrice($cost);
@@ -100,7 +130,6 @@ function purchase($user, $items) {
       if ($stock->getQuantity() == $stock->getSold()) {
 	$stock->setSoldOut(true);
       }
-
       $stock->save();
       $total_price += $cost;
     }
@@ -110,6 +139,20 @@ function purchase($user, $items) {
     $owner = $stock->getUser();
     $owner->setBalance($owner->getBalance() + $total_price);
     $owner->save();
+
+    // log the money
+    $bl = new BalanceLog();
+    $bl->setUser($user);
+    $bl->setNewBalance($user->getBalance());
+    $bl->setPurchase($purchase);
+    $bl->save();
+
+    $bl = new BalanceLog();
+    $bl->setUser($owner);
+    $bl->setNewBalance($owner->getBalance());
+    $bl->setSale($purchase);
+    $bl->save();
+
     $con->commit();
   } catch (Exception $e) {
     var_dump($e);

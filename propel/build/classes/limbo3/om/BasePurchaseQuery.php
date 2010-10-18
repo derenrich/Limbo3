@@ -38,6 +38,14 @@
  * @method     PurchaseQuery rightJoinItem($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Item relation
  * @method     PurchaseQuery innerJoinItem($relationAlias = null) Adds a INNER JOIN clause to the query using the Item relation
  *
+ * @method     PurchaseQuery leftJoinBalanceLogRelatedByPurchaseId($relationAlias = null) Adds a LEFT JOIN clause to the query using the BalanceLogRelatedByPurchaseId relation
+ * @method     PurchaseQuery rightJoinBalanceLogRelatedByPurchaseId($relationAlias = null) Adds a RIGHT JOIN clause to the query using the BalanceLogRelatedByPurchaseId relation
+ * @method     PurchaseQuery innerJoinBalanceLogRelatedByPurchaseId($relationAlias = null) Adds a INNER JOIN clause to the query using the BalanceLogRelatedByPurchaseId relation
+ *
+ * @method     PurchaseQuery leftJoinBalanceLogRelatedBySellId($relationAlias = null) Adds a LEFT JOIN clause to the query using the BalanceLogRelatedBySellId relation
+ * @method     PurchaseQuery rightJoinBalanceLogRelatedBySellId($relationAlias = null) Adds a RIGHT JOIN clause to the query using the BalanceLogRelatedBySellId relation
+ * @method     PurchaseQuery innerJoinBalanceLogRelatedBySellId($relationAlias = null) Adds a INNER JOIN clause to the query using the BalanceLogRelatedBySellId relation
+ *
  * @method     Purchase findOne(PropelPDO $con = null) Return the first Purchase matching the query
  * @method     Purchase findOneOrCreate(PropelPDO $con = null) Return the first Purchase matching the query, or a new Purchase object populated from the query conditions when no match is found
  *
@@ -558,6 +566,134 @@ abstract class BasePurchaseQuery extends ModelCriteria
 		return $this
 			->joinItem($relationAlias, $joinType)
 			->useQuery($relationAlias ? $relationAlias : 'Item', 'ItemQuery');
+	}
+
+	/**
+	 * Filter the query by a related BalanceLog object
+	 *
+	 * @param     BalanceLog $balanceLog  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    PurchaseQuery The current query, for fluid interface
+	 */
+	public function filterByBalanceLogRelatedByPurchaseId($balanceLog, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(PurchasePeer::ID, $balanceLog->getPurchaseId(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the BalanceLogRelatedByPurchaseId relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    PurchaseQuery The current query, for fluid interface
+	 */
+	public function joinBalanceLogRelatedByPurchaseId($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('BalanceLogRelatedByPurchaseId');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'BalanceLogRelatedByPurchaseId');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the BalanceLogRelatedByPurchaseId relation BalanceLog object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    BalanceLogQuery A secondary query class using the current class as primary query
+	 */
+	public function useBalanceLogRelatedByPurchaseIdQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		return $this
+			->joinBalanceLogRelatedByPurchaseId($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'BalanceLogRelatedByPurchaseId', 'BalanceLogQuery');
+	}
+
+	/**
+	 * Filter the query by a related BalanceLog object
+	 *
+	 * @param     BalanceLog $balanceLog  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    PurchaseQuery The current query, for fluid interface
+	 */
+	public function filterByBalanceLogRelatedBySellId($balanceLog, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(PurchasePeer::ID, $balanceLog->getSellId(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the BalanceLogRelatedBySellId relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    PurchaseQuery The current query, for fluid interface
+	 */
+	public function joinBalanceLogRelatedBySellId($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('BalanceLogRelatedBySellId');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'BalanceLogRelatedBySellId');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the BalanceLogRelatedBySellId relation BalanceLog object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    BalanceLogQuery A secondary query class using the current class as primary query
+	 */
+	public function useBalanceLogRelatedBySellIdQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		return $this
+			->joinBalanceLogRelatedBySellId($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'BalanceLogRelatedBySellId', 'BalanceLogQuery');
 	}
 
 	/**

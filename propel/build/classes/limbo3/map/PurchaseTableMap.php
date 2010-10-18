@@ -55,6 +55,8 @@ class PurchaseTableMap extends TableMap {
     $this->addRelation('User', 'User', RelationMap::MANY_TO_ONE, array('user_id' => 'id', ), null, null);
     $this->addRelation('Stock', 'Stock', RelationMap::MANY_TO_ONE, array('stock_id' => 'id', ), null, null);
     $this->addRelation('Item', 'Item', RelationMap::MANY_TO_ONE, array('item_id' => 'id', ), null, null);
+    $this->addRelation('BalanceLogRelatedByPurchaseId', 'BalanceLog', RelationMap::ONE_TO_MANY, array('id' => 'purchase_id', ), null, null);
+    $this->addRelation('BalanceLogRelatedBySellId', 'BalanceLog', RelationMap::ONE_TO_MANY, array('id' => 'sell_id', ), null, null);
 	} // buildRelations()
 
 } // PurchaseTableMap

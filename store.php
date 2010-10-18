@@ -31,15 +31,31 @@ $(document).ready(function() {
   // this way we prefill the data
   populate(screen(<?= json_encode(stock_suggest('')); ?>));
 });
+
+function PriceWarning(){
+  var total_text = $('span#total').html();
+  if(parseFloat(total_text)==0) {
+    alert("Dude, you didn't buy anything. Click. harder. pussy.");
+    return false;
+  } else {
+    return true;
+  }
+}
 </script>
 <center>
+<?php
+if($user->getBalance()<0) {
+  echo "<h1>You are in debt! Pay off your  ".format_currency($user->getBalance())."</h1>";
+}
+
+?>
 <table id="purchase-controls">
 <tr>
 <td>
 <h2> Shelves </h2>
 <label for="item-search">I'd like me some </label> <input type="text" id="item-search" value="" autocomplete="off" autofocus tabindex="1" onkeypress=”return event.keyCode!=13″
 />
-<form method="post" action="api.php" onSubmit="$('select#cart option').attr('selected','selected');">
+<form method="post" action="api.php" onSubmit="$('select#cart option').attr('selected','selected');return PriceWarning();">
 <input type="hidden" name="action" value="purchase" />
 <input type="hidden" value="<?=$user->getId() ?>" name="acting_user" /> 
 </td>
@@ -75,7 +91,7 @@ I want to transfer $<input type="number" name="amount" tabindex="4"/> <select  n
 because <input type="text" tabindex="7" name="reason" placeholder="he is such a cool dude"/>.
 <input type="hidden" name="action" value="transfer" />
 <br /> <br />
-<input value="Make it so." class="submit" type="Submit" tabindex="7"/>
+<input value="Make it so." class="submit" type="Submit" tabindex="7" />
 
 <input type="hidden" value="<?=$user->getId() ?>" name="acting_user" /> 
 </td>
@@ -126,6 +142,11 @@ I want to withdraw $<input type="number" name="amount" />.
 <tr>
 <td colspan="2">
 <a href="log.php?transfer=<?=$user->getId()?>">Monitor your transfers.</a>
+</td>
+</tr>
+<tr>
+<td>
+<a href="log.php?depositer=<?=$user->getId()?>">See your deposits.</a>
 </td>
 </tr>
 <tr>

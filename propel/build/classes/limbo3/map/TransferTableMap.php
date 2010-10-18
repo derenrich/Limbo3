@@ -38,8 +38,8 @@ class TransferTableMap extends TableMap {
 		$this->setUseIdGenerator(true);
 		// columns
 		$this->addPrimaryKey('ID', 'Id', 'INTEGER', true, null, null);
-		$this->addForeignKey('FROM', 'From', 'INTEGER', 'user', 'ID', true, null, null);
-		$this->addForeignKey('TO', 'To', 'INTEGER', 'user', 'ID', true, null, null);
+		$this->addForeignKey('FROM_USER', 'FromUser', 'INTEGER', 'user', 'ID', true, null, null);
+		$this->addForeignKey('TO_USER', 'ToUser', 'INTEGER', 'user', 'ID', true, null, null);
 		$this->addColumn('AMOUNT', 'Amount', 'DOUBLE', true, null, null);
 		$this->addColumn('REASON', 'Reason', 'VARCHAR', false, 255, '');
 		$this->addColumn('CREATED', 'Created', 'TIMESTAMP', false, null, 'current_timestamp');
@@ -51,8 +51,9 @@ class TransferTableMap extends TableMap {
 	 */
 	public function buildRelations()
 	{
-    $this->addRelation('UserRelatedByFrom', 'User', RelationMap::MANY_TO_ONE, array('from' => 'id', ), null, null);
-    $this->addRelation('UserRelatedByTo', 'User', RelationMap::MANY_TO_ONE, array('to' => 'id', ), null, null);
+    $this->addRelation('UserFrom', 'User', RelationMap::MANY_TO_ONE, array('from_user' => 'id', ), null, null);
+    $this->addRelation('UserTo', 'User', RelationMap::MANY_TO_ONE, array('to_user' => 'id', ), null, null);
+    $this->addRelation('BalanceLog', 'BalanceLog', RelationMap::ONE_TO_MANY, array('id' => 'transfer_id', ), null, null);
 	} // buildRelations()
 
 } // TransferTableMap

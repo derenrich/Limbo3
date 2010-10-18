@@ -38,8 +38,9 @@ class DepositTableMap extends TableMap {
 		$this->setUseIdGenerator(true);
 		// columns
 		$this->addPrimaryKey('ID', 'Id', 'INTEGER', true, null, null);
-		$this->addColumn('USER_ID', 'UserId', 'INTEGER', true, null, null);
+		$this->addForeignKey('USER_ID', 'UserId', 'INTEGER', 'user', 'ID', true, null, null);
 		$this->addColumn('AMOUNT', 'Amount', 'DOUBLE', true, null, null);
+		$this->addColumn('CREATED', 'Created', 'TIMESTAMP', false, null, 'current_timestamp');
 		// validators
 	} // initialize()
 
@@ -48,6 +49,8 @@ class DepositTableMap extends TableMap {
 	 */
 	public function buildRelations()
 	{
+    $this->addRelation('User', 'User', RelationMap::MANY_TO_ONE, array('user_id' => 'id', ), null, null);
+    $this->addRelation('BalanceLog', 'BalanceLog', RelationMap::ONE_TO_MANY, array('id' => 'deposit_id', ), null, null);
 	} // buildRelations()
 
 } // DepositTableMap

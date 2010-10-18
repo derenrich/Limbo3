@@ -3,6 +3,7 @@
   <table name="user" phpName="User">
     <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
     <column name="username" type="varchar" size="255" required="true" />
+    <column name="pandora_username" type="varchar" size="255"  />
     <unique>
       <unique-column name="username" />
     </unique>    
@@ -10,15 +11,43 @@
     <column name="email" type="varchar" size="255" />
     <column name="balance" type="double" required="true" default="0"/>
     <column name="created" type="timestamp" defaultExpr="current_timestamp" />
+    <index>
+      <index-column name="username" />
+    </index>
   </table>
-  
   <table name="item" phpName="Item">
     <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
     <column name="name" type="varchar" size="255" required="true" />
     <column name="UPC" type ="varchar" size="255" />    
     <column name="created" type="timestamp" defaultExpr="current_timestamp"/>
   </table>
-  
+  <table name="balance_log">
+    <column name="id" type="integer" required="true" primaryKey="true" />
+    <column name="new_balance" type="double" required="true" default="0"/>    
+    <column name="time" type="timestamp" defaultExpr="current_timestamp" />
+    <foreign-key foreignTable="user">
+      <reference local="id" foreign="id"/>
+    </foreign-key>
+    <column name="purchase_id" type="integer" />
+    <foreign-key foreignTable="purchase" phpName="Purchase">
+      <reference local="purchase_id" foreign="id"/>
+    </foreign-key>  
+
+    <column name="sell_id" type="integer"/>
+    <foreign-key foreignTable="purchase" phpName="Sale">
+      <reference local="sell_id" foreign="id"/>
+    </foreign-key>
+
+    <column name="deposit_id" type="integer"/>
+    <foreign-key foreignTable="deposit" phpName="Deposit">
+      <reference local="deposit_id" foreign="id"/>
+    </foreign-key>
+
+    <column name="transfer_id" type="integer"/>  
+    <foreign-key foreignTable="transfer" phpName="Transfer">
+      <reference local="transfer_id" foreign="id"/>
+    </foreign-key>
+  </table>
   <table name="stock" phpName="Stock">
     <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
     <column name="item_id" type="integer" required="true" />
@@ -38,7 +67,6 @@
     <column name="quantity" type="integer" required="true" />
     <column name="sold" type="integer" required="true" defaultValue="0"/>
   </table>
-  
   <table name="purchase" phpName="Purchase">
     <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
     <column name="user_id" type="integer" required="true" />
@@ -64,19 +92,29 @@
     <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
     <column name="user_id" type="integer" required="true" />
     <column name="amount" type="double" required="true" />
+    <column name="created" type="timestamp"  defaultExpr="current_timestamp"/>
+    <foreign-key foreignTable="user">
+      <reference local="user_id" foreign="id"/>
+    </foreign-key>
   </table>
   <table name="transfer" phpName="Transfer">
     <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
-    <column name="from" type="integer" required="true" />
-    <column name="to" type="integer" required="true"/>
+    <column name="from_user" type="integer" required="true" />
+    <column name="to_user" type="integer" required="true"/>
     <column name="amount" type="double" required="true" />
     <column name="reason" type="varchar" size="255" defaultValue="" />
     <column name="created" type="timestamp" defaultExpr="current_timestamp"/>
-    <foreign-key foreignTable="user">
-      <reference local="from" foreign="id"/>
+    <foreign-key foreignTable="user" phpName="UserFrom">
+      <reference local="from_user" foreign="id"/>
     </foreign-key>
-    <foreign-key foreignTable="user">
-      <reference local="to" foreign="id"/>
+    <foreign-key foreignTable="user" phpName="UserTo">
+      <reference local="to_user" foreign="id"/>
     </foreign-key>
+    <index>
+      <index-column name="from_user" />
+    </index>
+    <index>
+      <index-column name="to_user" />
+    </index>
   </table>
 </database>

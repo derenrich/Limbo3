@@ -22,7 +22,8 @@ switch($action){
     assert_key('direction', $_POST);
     $to = parse_user($_POST['target_user']);
     $direction = $_POST['direction'] == 'to' ? 1 : -1;
-    $error= transfer($acting_user, $to, $direction * ((double) $_POST['amount']));
+    $reason = $_POST['reason'];
+    $error= transfer($acting_user, $to, $direction * ((double) $_POST['amount']), $reason);
     break;
   case 'deposit':
     assert_key('amount', $_POST);
@@ -38,6 +39,9 @@ switch($action){
     // we need a count of each id
     $cart = $_POST['cart'];
     $items = array();
+    if(count($cart) == 0){
+      $cart = array();
+    }
     foreach($cart as $item) {
       $item_id = (int) $item;
       if($items[$item_id] == null) {
@@ -52,7 +56,9 @@ switch($action){
       $stock = StockQuery::create()->findOneById($stock_id);
       $stock_count[] = array($stock, $count);
     }
-    $error = purchase($acting_user,$stock_count);
+    if(count($stock_count) > 0){
+      $error = purchase($acting_user,$stock_count);
+    }
     break;
   default:
     echo "Invalid action";
@@ -62,7 +68,7 @@ switch($action){
 if ($error) {
   redirect("ERROR: Your transaction was canceled. Please try again.");
 } else {
-  redirect();
+  redirect($acting_user->getUsername() . " you have a balance of " . format_currency($acting_user->getBalance()));
 }
 
 ?>

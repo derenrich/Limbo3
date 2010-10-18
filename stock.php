@@ -20,12 +20,12 @@ if (array_key_exists('submit', $_POST)) {
   assert_key('item', $_POST);
   assert_key('price', $_POST);
   $price = (double) $_POST['price'];
-  if ($price <= 0 || $price > 75 || is_null($price)){
+  if ($price <= 0 || $price > 100 || is_null($price)){
     $message = 'That was an invalid price';
     $error = true;
   }
   $quantity = (int) $_POST['quantity'];
-  if ($quantity <= 0 || $quantity > 200 || is_null($quantity)){
+  if ($quantity <= 0 || $quantity > 400 || is_null($quantity)){
     $message = 'That was an invalid quantity';
     $error = true;
   }

@@ -31,16 +31,16 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	protected $id;
 
 	/**
-	 * The value for the from field.
+	 * The value for the from_user field.
 	 * @var        int
 	 */
-	protected $from;
+	protected $from_user;
 
 	/**
-	 * The value for the to field.
+	 * The value for the to_user field.
 	 * @var        int
 	 */
-	protected $to;
+	protected $to_user;
 
 	/**
 	 * The value for the amount field.
@@ -65,12 +65,17 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	/**
 	 * @var        User
 	 */
-	protected $aUserRelatedByFrom;
+	protected $aUserFrom;
 
 	/**
 	 * @var        User
 	 */
-	protected $aUserRelatedByTo;
+	protected $aUserTo;
+
+	/**
+	 * @var        array BalanceLog[] Collection to store aggregation of BalanceLog objects.
+	 */
+	protected $collBalanceLogs;
 
 	/**
 	 * Flag to prevent endless save loop, if this object is referenced
@@ -118,23 +123,23 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	}
 
 	/**
-	 * Get the [from] column value.
+	 * Get the [from_user] column value.
 	 * 
 	 * @return     int
 	 */
-	public function getFrom()
+	public function getFromUser()
 	{
-		return $this->from;
+		return $this->from_user;
 	}
 
 	/**
-	 * Get the [to] column value.
+	 * Get the [to_user] column value.
 	 * 
 	 * @return     int
 	 */
-	public function getTo()
+	public function getToUser()
 	{
-		return $this->to;
+		return $this->to_user;
 	}
 
 	/**
@@ -211,52 +216,52 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	} // setId()
 
 	/**
-	 * Set the value of [from] column.
+	 * Set the value of [from_user] column.
 	 * 
 	 * @param      int $v new value
 	 * @return     Transfer The current object (for fluent API support)
 	 */
-	public function setFrom($v)
+	public function setFromUser($v)
 	{
 		if ($v !== null) {
 			$v = (int) $v;
 		}
 
-		if ($this->from !== $v) {
-			$this->from = $v;
-			$this->modifiedColumns[] = TransferPeer::FROM;
+		if ($this->from_user !== $v) {
+			$this->from_user = $v;
+			$this->modifiedColumns[] = TransferPeer::FROM_USER;
 		}
 
-		if ($this->aUserRelatedByFrom !== null && $this->aUserRelatedByFrom->getId() !== $v) {
-			$this->aUserRelatedByFrom = null;
+		if ($this->aUserFrom !== null && $this->aUserFrom->getId() !== $v) {
+			$this->aUserFrom = null;
 		}
 
 		return $this;
-	} // setFrom()
+	} // setFromUser()
 
 	/**
-	 * Set the value of [to] column.
+	 * Set the value of [to_user] column.
 	 * 
 	 * @param      int $v new value
 	 * @return     Transfer The current object (for fluent API support)
 	 */
-	public function setTo($v)
+	public function setToUser($v)
 	{
 		if ($v !== null) {
 			$v = (int) $v;
 		}
 
-		if ($this->to !== $v) {
-			$this->to = $v;
-			$this->modifiedColumns[] = TransferPeer::TO;
+		if ($this->to_user !== $v) {
+			$this->to_user = $v;
+			$this->modifiedColumns[] = TransferPeer::TO_USER;
 		}
 
-		if ($this->aUserRelatedByTo !== null && $this->aUserRelatedByTo->getId() !== $v) {
-			$this->aUserRelatedByTo = null;
+		if ($this->aUserTo !== null && $this->aUserTo->getId() !== $v) {
+			$this->aUserTo = null;
 		}
 
 		return $this;
-	} // setTo()
+	} // setToUser()
 
 	/**
 	 * Set the value of [amount] column.
@@ -384,8 +389,8 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 		try {
 
 			$this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
-			$this->from = ($row[$startcol + 1] !== null) ? (int) $row[$startcol + 1] : null;
-			$this->to = ($row[$startcol + 2] !== null) ? (int) $row[$startcol + 2] : null;
+			$this->from_user = ($row[$startcol + 1] !== null) ? (int) $row[$startcol + 1] : null;
+			$this->to_user = ($row[$startcol + 2] !== null) ? (int) $row[$startcol + 2] : null;
 			$this->amount = ($row[$startcol + 3] !== null) ? (double) $row[$startcol + 3] : null;
 			$this->reason = ($row[$startcol + 4] !== null) ? (string) $row[$startcol + 4] : null;
 			$this->created = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
@@ -420,11 +425,11 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	public function ensureConsistency()
 	{
 
-		if ($this->aUserRelatedByFrom !== null && $this->from !== $this->aUserRelatedByFrom->getId()) {
-			$this->aUserRelatedByFrom = null;
+		if ($this->aUserFrom !== null && $this->from_user !== $this->aUserFrom->getId()) {
+			$this->aUserFrom = null;
 		}
-		if ($this->aUserRelatedByTo !== null && $this->to !== $this->aUserRelatedByTo->getId()) {
-			$this->aUserRelatedByTo = null;
+		if ($this->aUserTo !== null && $this->to_user !== $this->aUserTo->getId()) {
+			$this->aUserTo = null;
 		}
 	} // ensureConsistency
 
@@ -464,8 +469,9 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 		$this->hydrate($row, 0, true); // rehydrate
 
 		if ($deep) {  // also de-associate any related objects?
-			$this->aUserRelatedByFrom = null;
-			$this->aUserRelatedByTo = null;
+			$this->aUserFrom = null;
+			$this->aUserTo = null;
+			$this->collBalanceLogs = null;
 		} // if (deep)
 	}
 
@@ -581,18 +587,18 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 			// method.  This object relates to these object(s) by a
 			// foreign key reference.
 
-			if ($this->aUserRelatedByFrom !== null) {
-				if ($this->aUserRelatedByFrom->isModified() || $this->aUserRelatedByFrom->isNew()) {
-					$affectedRows += $this->aUserRelatedByFrom->save($con);
+			if ($this->aUserFrom !== null) {
+				if ($this->aUserFrom->isModified() || $this->aUserFrom->isNew()) {
+					$affectedRows += $this->aUserFrom->save($con);
 				}
-				$this->setUserRelatedByFrom($this->aUserRelatedByFrom);
+				$this->setUserFrom($this->aUserFrom);
 			}
 
-			if ($this->aUserRelatedByTo !== null) {
-				if ($this->aUserRelatedByTo->isModified() || $this->aUserRelatedByTo->isNew()) {
-					$affectedRows += $this->aUserRelatedByTo->save($con);
+			if ($this->aUserTo !== null) {
+				if ($this->aUserTo->isModified() || $this->aUserTo->isNew()) {
+					$affectedRows += $this->aUserTo->save($con);
 				}
-				$this->setUserRelatedByTo($this->aUserRelatedByTo);
+				$this->setUserTo($this->aUserTo);
 			}
 
 			if ($this->isNew() ) {
@@ -616,6 +622,14 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 				}
 
 				$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
+			}
+
+			if ($this->collBalanceLogs !== null) {
+				foreach ($this->collBalanceLogs as $referrerFK) {
+					if (!$referrerFK->isDeleted()) {
+						$affectedRows += $referrerFK->save($con);
+					}
+				}
 			}
 
 			$this->alreadyInSave = false;
@@ -689,15 +703,15 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 			// method.  This object relates to these object(s) by a
 			// foreign key reference.
 
-			if ($this->aUserRelatedByFrom !== null) {
-				if (!$this->aUserRelatedByFrom->validate($columns)) {
-					$failureMap = array_merge($failureMap, $this->aUserRelatedByFrom->getValidationFailures());
+			if ($this->aUserFrom !== null) {
+				if (!$this->aUserFrom->validate($columns)) {
+					$failureMap = array_merge($failureMap, $this->aUserFrom->getValidationFailures());
 				}
 			}
 
-			if ($this->aUserRelatedByTo !== null) {
-				if (!$this->aUserRelatedByTo->validate($columns)) {
-					$failureMap = array_merge($failureMap, $this->aUserRelatedByTo->getValidationFailures());
+			if ($this->aUserTo !== null) {
+				if (!$this->aUserTo->validate($columns)) {
+					$failureMap = array_merge($failureMap, $this->aUserTo->getValidationFailures());
 				}
 			}
 
@@ -706,6 +720,14 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 				$failureMap = array_merge($failureMap, $retval);
 			}
 
+
+				if ($this->collBalanceLogs !== null) {
+					foreach ($this->collBalanceLogs as $referrerFK) {
+						if (!$referrerFK->validate($columns)) {
+							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
+						}
+					}
+				}
 
 
 			$this->alreadyInValidation = false;
@@ -744,10 +766,10 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 				return $this->getId();
 				break;
 			case 1:
-				return $this->getFrom();
+				return $this->getFromUser();
 				break;
 			case 2:
-				return $this->getTo();
+				return $this->getToUser();
 				break;
 			case 3:
 				return $this->getAmount();
@@ -783,18 +805,18 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 		$keys = TransferPeer::getFieldNames($keyType);
 		$result = array(
 			$keys[0] => $this->getId(),
-			$keys[1] => $this->getFrom(),
-			$keys[2] => $this->getTo(),
+			$keys[1] => $this->getFromUser(),
+			$keys[2] => $this->getToUser(),
 			$keys[3] => $this->getAmount(),
 			$keys[4] => $this->getReason(),
 			$keys[5] => $this->getCreated(),
 		);
 		if ($includeForeignObjects) {
-			if (null !== $this->aUserRelatedByFrom) {
-				$result['UserRelatedByFrom'] = $this->aUserRelatedByFrom->toArray($keyType, $includeLazyLoadColumns, true);
+			if (null !== $this->aUserFrom) {
+				$result['UserFrom'] = $this->aUserFrom->toArray($keyType, $includeLazyLoadColumns, true);
 			}
-			if (null !== $this->aUserRelatedByTo) {
-				$result['UserRelatedByTo'] = $this->aUserRelatedByTo->toArray($keyType, $includeLazyLoadColumns, true);
+			if (null !== $this->aUserTo) {
+				$result['UserTo'] = $this->aUserTo->toArray($keyType, $includeLazyLoadColumns, true);
 			}
 		}
 		return $result;
@@ -831,10 +853,10 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 				$this->setId($value);
 				break;
 			case 1:
-				$this->setFrom($value);
+				$this->setFromUser($value);
 				break;
 			case 2:
-				$this->setTo($value);
+				$this->setToUser($value);
 				break;
 			case 3:
 				$this->setAmount($value);
@@ -870,8 +892,8 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 		$keys = TransferPeer::getFieldNames($keyType);
 
 		if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
-		if (array_key_exists($keys[1], $arr)) $this->setFrom($arr[$keys[1]]);
-		if (array_key_exists($keys[2], $arr)) $this->setTo($arr[$keys[2]]);
+		if (array_key_exists($keys[1], $arr)) $this->setFromUser($arr[$keys[1]]);
+		if (array_key_exists($keys[2], $arr)) $this->setToUser($arr[$keys[2]]);
 		if (array_key_exists($keys[3], $arr)) $this->setAmount($arr[$keys[3]]);
 		if (array_key_exists($keys[4], $arr)) $this->setReason($arr[$keys[4]]);
 		if (array_key_exists($keys[5], $arr)) $this->setCreated($arr[$keys[5]]);
@@ -887,8 +909,8 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 		$criteria = new Criteria(TransferPeer::DATABASE_NAME);
 
 		if ($this->isColumnModified(TransferPeer::ID)) $criteria->add(TransferPeer::ID, $this->id);
-		if ($this->isColumnModified(TransferPeer::FROM)) $criteria->add(TransferPeer::FROM, $this->from);
-		if ($this->isColumnModified(TransferPeer::TO)) $criteria->add(TransferPeer::TO, $this->to);
+		if ($this->isColumnModified(TransferPeer::FROM_USER)) $criteria->add(TransferPeer::FROM_USER, $this->from_user);
+		if ($this->isColumnModified(TransferPeer::TO_USER)) $criteria->add(TransferPeer::TO_USER, $this->to_user);
 		if ($this->isColumnModified(TransferPeer::AMOUNT)) $criteria->add(TransferPeer::AMOUNT, $this->amount);
 		if ($this->isColumnModified(TransferPeer::REASON)) $criteria->add(TransferPeer::REASON, $this->reason);
 		if ($this->isColumnModified(TransferPeer::CREATED)) $criteria->add(TransferPeer::CREATED, $this->created);
@@ -953,11 +975,25 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	 */
 	public function copyInto($copyObj, $deepCopy = false)
 	{
-		$copyObj->setFrom($this->from);
-		$copyObj->setTo($this->to);
+		$copyObj->setFromUser($this->from_user);
+		$copyObj->setToUser($this->to_user);
 		$copyObj->setAmount($this->amount);
 		$copyObj->setReason($this->reason);
 		$copyObj->setCreated($this->created);
+
+		if ($deepCopy) {
+			// important: temporarily setNew(false) because this affects the behavior of
+			// the getter/setter methods for fkey referrer objects.
+			$copyObj->setNew(false);
+
+			foreach ($this->getBalanceLogs() as $relObj) {
+				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+					$copyObj->addBalanceLog($relObj->copy($deepCopy));
+				}
+			}
+
+		} // if ($deepCopy)
+
 
 		$copyObj->setNew(true);
 		$copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1008,20 +1044,20 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	 * @return     Transfer The current object (for fluent API support)
 	 * @throws     PropelException
 	 */
-	public function setUserRelatedByFrom(User $v = null)
+	public function setUserFrom(User $v = null)
 	{
 		if ($v === null) {
-			$this->setFrom(NULL);
+			$this->setFromUser(NULL);
 		} else {
-			$this->setFrom($v->getId());
+			$this->setFromUser($v->getId());
 		}
 
-		$this->aUserRelatedByFrom = $v;
+		$this->aUserFrom = $v;
 
 		// Add binding for other direction of this n:n relationship.
 		// If this object has already been added to the User object, it will not be re-added.
 		if ($v !== null) {
-			$v->addTransferRelatedByFrom($this);
+			$v->addTransferRelatedByFromUser($this);
 		}
 
 		return $this;
@@ -1035,19 +1071,19 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	 * @return     User The associated User object.
 	 * @throws     PropelException
 	 */
-	public function getUserRelatedByFrom(PropelPDO $con = null)
+	public function getUserFrom(PropelPDO $con = null)
 	{
-		if ($this->aUserRelatedByFrom === null && ($this->from !== null)) {
-			$this->aUserRelatedByFrom = UserQuery::create()->findPk($this->from, $con);
+		if ($this->aUserFrom === null && ($this->from_user !== null)) {
+			$this->aUserFrom = UserQuery::create()->findPk($this->from_user, $con);
 			/* The following can be used additionally to
 				 guarantee the related object contains a reference
 				 to this object.  This level of coupling may, however, be
 				 undesirable since it could result in an only partially populated collection
 				 in the referenced object.
-				 $this->aUserRelatedByFrom->addTransfersRelatedByFrom($this);
+				 $this->aUserFrom->addTransfersRelatedByFromUser($this);
 			 */
 		}
-		return $this->aUserRelatedByFrom;
+		return $this->aUserFrom;
 	}
 
 	/**
@@ -1057,20 +1093,20 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	 * @return     Transfer The current object (for fluent API support)
 	 * @throws     PropelException
 	 */
-	public function setUserRelatedByTo(User $v = null)
+	public function setUserTo(User $v = null)
 	{
 		if ($v === null) {
-			$this->setTo(NULL);
+			$this->setToUser(NULL);
 		} else {
-			$this->setTo($v->getId());
+			$this->setToUser($v->getId());
 		}
 
-		$this->aUserRelatedByTo = $v;
+		$this->aUserTo = $v;
 
 		// Add binding for other direction of this n:n relationship.
 		// If this object has already been added to the User object, it will not be re-added.
 		if ($v !== null) {
-			$v->addTransferRelatedByTo($this);
+			$v->addTransferRelatedByToUser($this);
 		}
 
 		return $this;
@@ -1084,19 +1120,228 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	 * @return     User The associated User object.
 	 * @throws     PropelException
 	 */
-	public function getUserRelatedByTo(PropelPDO $con = null)
+	public function getUserTo(PropelPDO $con = null)
 	{
-		if ($this->aUserRelatedByTo === null && ($this->to !== null)) {
-			$this->aUserRelatedByTo = UserQuery::create()->findPk($this->to, $con);
+		if ($this->aUserTo === null && ($this->to_user !== null)) {
+			$this->aUserTo = UserQuery::create()->findPk($this->to_user, $con);
 			/* The following can be used additionally to
 				 guarantee the related object contains a reference
 				 to this object.  This level of coupling may, however, be
 				 undesirable since it could result in an only partially populated collection
 				 in the referenced object.
-				 $this->aUserRelatedByTo->addTransfersRelatedByTo($this);
+				 $this->aUserTo->addTransfersRelatedByToUser($this);
 			 */
 		}
-		return $this->aUserRelatedByTo;
+		return $this->aUserTo;
+	}
+
+	/**
+	 * Clears out the collBalanceLogs collection
+	 *
+	 * This does not modify the database; however, it will remove any associated objects, causing
+	 * them to be refetched by subsequent calls to accessor method.
+	 *
+	 * @return     void
+	 * @see        addBalanceLogs()
+	 */
+	public function clearBalanceLogs()
+	{
+		$this->collBalanceLogs = null; // important to set this to NULL since that means it is uninitialized
+	}
+
+	/**
+	 * Initializes the collBalanceLogs collection.
+	 *
+	 * By default this just sets the collBalanceLogs collection to an empty array (like clearcollBalanceLogs());
+	 * however, you may wish to override this method in your stub class to provide setting appropriate
+	 * to your application -- for example, setting the initial array to the values stored in database.
+	 *
+	 * @return     void
+	 */
+	public function initBalanceLogs()
+	{
+		$this->collBalanceLogs = new PropelObjectCollection();
+		$this->collBalanceLogs->setModel('BalanceLog');
+	}
+
+	/**
+	 * Gets an array of BalanceLog objects which contain a foreign key that references this object.
+	 *
+	 * If the $criteria is not null, it is used to always fetch the results from the database.
+	 * Otherwise the results are fetched from the database the first time, then cached.
+	 * Next time the same method is called without $criteria, the cached collection is returned.
+	 * If this Transfer is new, it will return
+	 * an empty collection or the current collection; the criteria is ignored on a new object.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 * @throws     PropelException
+	 */
+	public function getBalanceLogs($criteria = null, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogs || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogs) {
+				// return empty collection
+				$this->initBalanceLogs();
+			} else {
+				$collBalanceLogs = BalanceLogQuery::create(null, $criteria)
+					->filterByTransfer($this)
+					->find($con);
+				if (null !== $criteria) {
+					return $collBalanceLogs;
+				}
+				$this->collBalanceLogs = $collBalanceLogs;
+			}
+		}
+		return $this->collBalanceLogs;
+	}
+
+	/**
+	 * Returns the number of related BalanceLog objects.
+	 *
+	 * @param      Criteria $criteria
+	 * @param      boolean $distinct
+	 * @param      PropelPDO $con
+	 * @return     int Count of related BalanceLog objects.
+	 * @throws     PropelException
+	 */
+	public function countBalanceLogs(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogs || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogs) {
+				return 0;
+			} else {
+				$query = BalanceLogQuery::create(null, $criteria);
+				if($distinct) {
+					$query->distinct();
+				}
+				return $query
+					->filterByTransfer($this)
+					->count($con);
+			}
+		} else {
+			return count($this->collBalanceLogs);
+		}
+	}
+
+	/**
+	 * Method called to associate a BalanceLog object to this object
+	 * through the BalanceLog foreign key attribute.
+	 *
+	 * @param      BalanceLog $l BalanceLog
+	 * @return     void
+	 * @throws     PropelException
+	 */
+	public function addBalanceLog(BalanceLog $l)
+	{
+		if ($this->collBalanceLogs === null) {
+			$this->initBalanceLogs();
+		}
+		if (!$this->collBalanceLogs->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collBalanceLogs[]= $l;
+			$l->setTransfer($this);
+		}
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Transfer is new, it will return
+	 * an empty collection; or if this Transfer has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Transfer.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinUser($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('User', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Transfer is new, it will return
+	 * an empty collection; or if this Transfer has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Transfer.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinPurchase($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Purchase', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Transfer is new, it will return
+	 * an empty collection; or if this Transfer has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Transfer.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinSale($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Sale', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Transfer is new, it will return
+	 * an empty collection; or if this Transfer has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Transfer.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinDeposit($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Deposit', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
 	}
 
 	/**
@@ -1105,8 +1350,8 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	public function clear()
 	{
 		$this->id = null;
-		$this->from = null;
-		$this->to = null;
+		$this->from_user = null;
+		$this->to_user = null;
 		$this->amount = null;
 		$this->reason = null;
 		$this->created = null;
@@ -1131,10 +1376,16 @@ abstract class BaseTransfer extends BaseObject  implements Persistent
 	public function clearAllReferences($deep = false)
 	{
 		if ($deep) {
+			if ($this->collBalanceLogs) {
+				foreach ((array) $this->collBalanceLogs as $o) {
+					$o->clearAllReferences($deep);
+				}
+			}
 		} // if ($deep)
 
-		$this->aUserRelatedByFrom = null;
-		$this->aUserRelatedByTo = null;
+		$this->collBalanceLogs = null;
+		$this->aUserFrom = null;
+		$this->aUserTo = null;
 	}
 
 	/**

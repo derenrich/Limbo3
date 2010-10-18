@@ -34,11 +34,11 @@ abstract class BaseTransferPeer {
 	/** the column name for the ID field */
 	const ID = 'transfer.ID';
 
-	/** the column name for the FROM field */
-	const FROM = 'transfer.FROM';
+	/** the column name for the FROM_USER field */
+	const FROM_USER = 'transfer.FROM_USER';
 
-	/** the column name for the TO field */
-	const TO = 'transfer.TO';
+	/** the column name for the TO_USER field */
+	const TO_USER = 'transfer.TO_USER';
 
 	/** the column name for the AMOUNT field */
 	const AMOUNT = 'transfer.AMOUNT';
@@ -65,11 +65,11 @@ abstract class BaseTransferPeer {
 	 * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
 	 */
 	private static $fieldNames = array (
-		BasePeer::TYPE_PHPNAME => array ('Id', 'From', 'To', 'Amount', 'Reason', 'Created', ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'from', 'to', 'amount', 'reason', 'created', ),
-		BasePeer::TYPE_COLNAME => array (self::ID, self::FROM, self::TO, self::AMOUNT, self::REASON, self::CREATED, ),
-		BasePeer::TYPE_RAW_COLNAME => array ('ID', 'FROM', 'TO', 'AMOUNT', 'REASON', 'CREATED', ),
-		BasePeer::TYPE_FIELDNAME => array ('id', 'from', 'to', 'amount', 'reason', 'created', ),
+		BasePeer::TYPE_PHPNAME => array ('Id', 'FromUser', 'ToUser', 'Amount', 'Reason', 'Created', ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'fromUser', 'toUser', 'amount', 'reason', 'created', ),
+		BasePeer::TYPE_COLNAME => array (self::ID, self::FROM_USER, self::TO_USER, self::AMOUNT, self::REASON, self::CREATED, ),
+		BasePeer::TYPE_RAW_COLNAME => array ('ID', 'FROM_USER', 'TO_USER', 'AMOUNT', 'REASON', 'CREATED', ),
+		BasePeer::TYPE_FIELDNAME => array ('id', 'from_user', 'to_user', 'amount', 'reason', 'created', ),
 		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
 	);
 
@@ -80,11 +80,11 @@ abstract class BaseTransferPeer {
 	 * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
 	 */
 	private static $fieldKeys = array (
-		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'From' => 1, 'To' => 2, 'Amount' => 3, 'Reason' => 4, 'Created' => 5, ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'from' => 1, 'to' => 2, 'amount' => 3, 'reason' => 4, 'created' => 5, ),
-		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::FROM => 1, self::TO => 2, self::AMOUNT => 3, self::REASON => 4, self::CREATED => 5, ),
-		BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'FROM' => 1, 'TO' => 2, 'AMOUNT' => 3, 'REASON' => 4, 'CREATED' => 5, ),
-		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'from' => 1, 'to' => 2, 'amount' => 3, 'reason' => 4, 'created' => 5, ),
+		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'FromUser' => 1, 'ToUser' => 2, 'Amount' => 3, 'Reason' => 4, 'Created' => 5, ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'fromUser' => 1, 'toUser' => 2, 'amount' => 3, 'reason' => 4, 'created' => 5, ),
+		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::FROM_USER => 1, self::TO_USER => 2, self::AMOUNT => 3, self::REASON => 4, self::CREATED => 5, ),
+		BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'FROM_USER' => 1, 'TO_USER' => 2, 'AMOUNT' => 3, 'REASON' => 4, 'CREATED' => 5, ),
+		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'from_user' => 1, 'to_user' => 2, 'amount' => 3, 'reason' => 4, 'created' => 5, ),
 		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
 	);
 
@@ -158,15 +158,15 @@ abstract class BaseTransferPeer {
 	{
 		if (null === $alias) {
 			$criteria->addSelectColumn(TransferPeer::ID);
-			$criteria->addSelectColumn(TransferPeer::FROM);
-			$criteria->addSelectColumn(TransferPeer::TO);
+			$criteria->addSelectColumn(TransferPeer::FROM_USER);
+			$criteria->addSelectColumn(TransferPeer::TO_USER);
 			$criteria->addSelectColumn(TransferPeer::AMOUNT);
 			$criteria->addSelectColumn(TransferPeer::REASON);
 			$criteria->addSelectColumn(TransferPeer::CREATED);
 		} else {
 			$criteria->addSelectColumn($alias . '.ID');
-			$criteria->addSelectColumn($alias . '.FROM');
-			$criteria->addSelectColumn($alias . '.TO');
+			$criteria->addSelectColumn($alias . '.FROM_USER');
+			$criteria->addSelectColumn($alias . '.TO_USER');
 			$criteria->addSelectColumn($alias . '.AMOUNT');
 			$criteria->addSelectColumn($alias . '.REASON');
 			$criteria->addSelectColumn($alias . '.CREATED');
@@ -456,7 +456,7 @@ abstract class BaseTransferPeer {
 	}
 
 	/**
-	 * Returns the number of rows matching criteria, joining the related UserRelatedByFrom table
+	 * Returns the number of rows matching criteria, joining the related UserFrom table
 	 *
 	 * @param      Criteria $criteria
 	 * @param      boolean $distinct Whether to select only distinct columns; deprecated: use Criteria->setDistinct() instead.
@@ -464,7 +464,7 @@ abstract class BaseTransferPeer {
 	 * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
 	 * @return     int Number of matching rows.
 	 */
-	public static function doCountJoinUserRelatedByFrom(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doCountJoinUserFrom(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		// we're going to modify criteria, so copy it first
 		$criteria = clone $criteria;
@@ -491,7 +491,7 @@ abstract class BaseTransferPeer {
 			$con = Propel::getConnection(TransferPeer::DATABASE_NAME, Propel::CONNECTION_READ);
 		}
 
-		$criteria->addJoin(TransferPeer::FROM, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::FROM_USER, UserPeer::ID, $join_behavior);
 
 		$stmt = BasePeer::doCount($criteria, $con);
 
@@ -506,7 +506,7 @@ abstract class BaseTransferPeer {
 
 
 	/**
-	 * Returns the number of rows matching criteria, joining the related UserRelatedByTo table
+	 * Returns the number of rows matching criteria, joining the related UserTo table
 	 *
 	 * @param      Criteria $criteria
 	 * @param      boolean $distinct Whether to select only distinct columns; deprecated: use Criteria->setDistinct() instead.
@@ -514,7 +514,7 @@ abstract class BaseTransferPeer {
 	 * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
 	 * @return     int Number of matching rows.
 	 */
-	public static function doCountJoinUserRelatedByTo(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doCountJoinUserTo(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		// we're going to modify criteria, so copy it first
 		$criteria = clone $criteria;
@@ -541,7 +541,7 @@ abstract class BaseTransferPeer {
 			$con = Propel::getConnection(TransferPeer::DATABASE_NAME, Propel::CONNECTION_READ);
 		}
 
-		$criteria->addJoin(TransferPeer::TO, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::TO_USER, UserPeer::ID, $join_behavior);
 
 		$stmt = BasePeer::doCount($criteria, $con);
 
@@ -564,7 +564,7 @@ abstract class BaseTransferPeer {
 	 * @throws     PropelException Any exceptions caught during processing will be
 	 *		 rethrown wrapped into a PropelException.
 	 */
-	public static function doSelectJoinUserRelatedByFrom(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doSelectJoinUserFrom(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		$criteria = clone $criteria;
 
@@ -577,7 +577,7 @@ abstract class BaseTransferPeer {
 		$startcol = (TransferPeer::NUM_COLUMNS - TransferPeer::NUM_LAZY_LOAD_COLUMNS);
 		UserPeer::addSelectColumns($criteria);
 
-		$criteria->addJoin(TransferPeer::FROM, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::FROM_USER, UserPeer::ID, $join_behavior);
 
 		$stmt = BasePeer::doSelect($criteria, $con);
 		$results = array();
@@ -610,7 +610,7 @@ abstract class BaseTransferPeer {
 				} // if obj2 already loaded
 
 				// Add the $obj1 (Transfer) to $obj2 (User)
-				$obj2->addTransferRelatedByFrom($obj1);
+				$obj2->addTransferRelatedByFromUser($obj1);
 
 			} // if joined row was not null
 
@@ -630,7 +630,7 @@ abstract class BaseTransferPeer {
 	 * @throws     PropelException Any exceptions caught during processing will be
 	 *		 rethrown wrapped into a PropelException.
 	 */
-	public static function doSelectJoinUserRelatedByTo(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doSelectJoinUserTo(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		$criteria = clone $criteria;
 
@@ -643,7 +643,7 @@ abstract class BaseTransferPeer {
 		$startcol = (TransferPeer::NUM_COLUMNS - TransferPeer::NUM_LAZY_LOAD_COLUMNS);
 		UserPeer::addSelectColumns($criteria);
 
-		$criteria->addJoin(TransferPeer::TO, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::TO_USER, UserPeer::ID, $join_behavior);
 
 		$stmt = BasePeer::doSelect($criteria, $con);
 		$results = array();
@@ -676,7 +676,7 @@ abstract class BaseTransferPeer {
 				} // if obj2 already loaded
 
 				// Add the $obj1 (Transfer) to $obj2 (User)
-				$obj2->addTransferRelatedByTo($obj1);
+				$obj2->addTransferRelatedByToUser($obj1);
 
 			} // if joined row was not null
 
@@ -723,9 +723,9 @@ abstract class BaseTransferPeer {
 			$con = Propel::getConnection(TransferPeer::DATABASE_NAME, Propel::CONNECTION_READ);
 		}
 
-		$criteria->addJoin(TransferPeer::FROM, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::FROM_USER, UserPeer::ID, $join_behavior);
 
-		$criteria->addJoin(TransferPeer::TO, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::TO_USER, UserPeer::ID, $join_behavior);
 
 		$stmt = BasePeer::doCount($criteria, $con);
 
@@ -766,9 +766,9 @@ abstract class BaseTransferPeer {
 		UserPeer::addSelectColumns($criteria);
 		$startcol4 = $startcol3 + (UserPeer::NUM_COLUMNS - UserPeer::NUM_LAZY_LOAD_COLUMNS);
 
-		$criteria->addJoin(TransferPeer::FROM, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::FROM_USER, UserPeer::ID, $join_behavior);
 
-		$criteria->addJoin(TransferPeer::TO, UserPeer::ID, $join_behavior);
+		$criteria->addJoin(TransferPeer::TO_USER, UserPeer::ID, $join_behavior);
 
 		$stmt = BasePeer::doSelect($criteria, $con);
 		$results = array();
@@ -802,7 +802,7 @@ abstract class BaseTransferPeer {
 				} // if obj2 loaded
 
 				// Add the $obj1 (Transfer) to the collection in $obj2 (User)
-				$obj2->addTransferRelatedByFrom($obj1);
+				$obj2->addTransferRelatedByFromUser($obj1);
 			} // if joined row not null
 
 			// Add objects for joined User rows
@@ -820,7 +820,7 @@ abstract class BaseTransferPeer {
 				} // if obj3 loaded
 
 				// Add the $obj1 (Transfer) to the collection in $obj3 (User)
-				$obj3->addTransferRelatedByTo($obj1);
+				$obj3->addTransferRelatedByToUser($obj1);
 			} // if joined row not null
 
 			$results[] = $obj1;
@@ -831,7 +831,7 @@ abstract class BaseTransferPeer {
 
 
 	/**
-	 * Returns the number of rows matching criteria, joining the related UserRelatedByFrom table
+	 * Returns the number of rows matching criteria, joining the related UserFrom table
 	 *
 	 * @param      Criteria $criteria
 	 * @param      boolean $distinct Whether to select only distinct columns; deprecated: use Criteria->setDistinct() instead.
@@ -839,7 +839,7 @@ abstract class BaseTransferPeer {
 	 * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
 	 * @return     int Number of matching rows.
 	 */
-	public static function doCountJoinAllExceptUserRelatedByFrom(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doCountJoinAllExceptUserFrom(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		// we're going to modify criteria, so copy it first
 		$criteria = clone $criteria;
@@ -879,7 +879,7 @@ abstract class BaseTransferPeer {
 
 
 	/**
-	 * Returns the number of rows matching criteria, joining the related UserRelatedByTo table
+	 * Returns the number of rows matching criteria, joining the related UserTo table
 	 *
 	 * @param      Criteria $criteria
 	 * @param      boolean $distinct Whether to select only distinct columns; deprecated: use Criteria->setDistinct() instead.
@@ -887,7 +887,7 @@ abstract class BaseTransferPeer {
 	 * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
 	 * @return     int Number of matching rows.
 	 */
-	public static function doCountJoinAllExceptUserRelatedByTo(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doCountJoinAllExceptUserTo(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		// we're going to modify criteria, so copy it first
 		$criteria = clone $criteria;
@@ -927,7 +927,7 @@ abstract class BaseTransferPeer {
 
 
 	/**
-	 * Selects a collection of Transfer objects pre-filled with all related objects except UserRelatedByFrom.
+	 * Selects a collection of Transfer objects pre-filled with all related objects except UserFrom.
 	 *
 	 * @param      Criteria  $criteria
 	 * @param      PropelPDO $con
@@ -936,7 +936,7 @@ abstract class BaseTransferPeer {
 	 * @throws     PropelException Any exceptions caught during processing will be
 	 *		 rethrown wrapped into a PropelException.
 	 */
-	public static function doSelectJoinAllExceptUserRelatedByFrom(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doSelectJoinAllExceptUserFrom(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		$criteria = clone $criteria;
 
@@ -976,7 +976,7 @@ abstract class BaseTransferPeer {
 
 
 	/**
-	 * Selects a collection of Transfer objects pre-filled with all related objects except UserRelatedByTo.
+	 * Selects a collection of Transfer objects pre-filled with all related objects except UserTo.
 	 *
 	 * @param      Criteria  $criteria
 	 * @param      PropelPDO $con
@@ -985,7 +985,7 @@ abstract class BaseTransferPeer {
 	 * @throws     PropelException Any exceptions caught during processing will be
 	 *		 rethrown wrapped into a PropelException.
 	 */
-	public static function doSelectJoinAllExceptUserRelatedByTo(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	public static function doSelectJoinAllExceptUserTo(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
 	{
 		$criteria = clone $criteria;
 

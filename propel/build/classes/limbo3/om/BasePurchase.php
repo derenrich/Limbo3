@@ -83,6 +83,16 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	protected $aItem;
 
 	/**
+	 * @var        array BalanceLog[] Collection to store aggregation of BalanceLog objects.
+	 */
+	protected $collBalanceLogsRelatedByPurchaseId;
+
+	/**
+	 * @var        array BalanceLog[] Collection to store aggregation of BalanceLog objects.
+	 */
+	protected $collBalanceLogsRelatedBySellId;
+
+	/**
 	 * Flag to prevent endless save loop, if this object is referenced
 	 * by another object which falls in this transaction.
 	 * @var        boolean
@@ -510,6 +520,8 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 			$this->aUser = null;
 			$this->aStock = null;
 			$this->aItem = null;
+			$this->collBalanceLogsRelatedByPurchaseId = null;
+			$this->collBalanceLogsRelatedBySellId = null;
 		} // if (deep)
 	}
 
@@ -669,6 +681,22 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 				$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
 			}
 
+			if ($this->collBalanceLogsRelatedByPurchaseId !== null) {
+				foreach ($this->collBalanceLogsRelatedByPurchaseId as $referrerFK) {
+					if (!$referrerFK->isDeleted()) {
+						$affectedRows += $referrerFK->save($con);
+					}
+				}
+			}
+
+			if ($this->collBalanceLogsRelatedBySellId !== null) {
+				foreach ($this->collBalanceLogsRelatedBySellId as $referrerFK) {
+					if (!$referrerFK->isDeleted()) {
+						$affectedRows += $referrerFK->save($con);
+					}
+				}
+			}
+
 			$this->alreadyInSave = false;
 
 		}
@@ -763,6 +791,22 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 				$failureMap = array_merge($failureMap, $retval);
 			}
 
+
+				if ($this->collBalanceLogsRelatedByPurchaseId !== null) {
+					foreach ($this->collBalanceLogsRelatedByPurchaseId as $referrerFK) {
+						if (!$referrerFK->validate($columns)) {
+							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
+						}
+					}
+				}
+
+				if ($this->collBalanceLogsRelatedBySellId !== null) {
+					foreach ($this->collBalanceLogsRelatedBySellId as $referrerFK) {
+						if (!$referrerFK->validate($columns)) {
+							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
+						}
+					}
+				}
 
 
 			$this->alreadyInValidation = false;
@@ -1029,6 +1073,26 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 		$copyObj->setCreated($this->created);
 		$copyObj->setPrice($this->price);
 
+		if ($deepCopy) {
+			// important: temporarily setNew(false) because this affects the behavior of
+			// the getter/setter methods for fkey referrer objects.
+			$copyObj->setNew(false);
+
+			foreach ($this->getBalanceLogsRelatedByPurchaseId() as $relObj) {
+				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+					$copyObj->addBalanceLogRelatedByPurchaseId($relObj->copy($deepCopy));
+				}
+			}
+
+			foreach ($this->getBalanceLogsRelatedBySellId() as $relObj) {
+				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+					$copyObj->addBalanceLogRelatedBySellId($relObj->copy($deepCopy));
+				}
+			}
+
+		} // if ($deepCopy)
+
+
 		$copyObj->setNew(true);
 		$copyObj->setId(NULL); // this is a auto-increment column, so set to default value
 	}
@@ -1219,6 +1283,374 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	}
 
 	/**
+	 * Clears out the collBalanceLogsRelatedByPurchaseId collection
+	 *
+	 * This does not modify the database; however, it will remove any associated objects, causing
+	 * them to be refetched by subsequent calls to accessor method.
+	 *
+	 * @return     void
+	 * @see        addBalanceLogsRelatedByPurchaseId()
+	 */
+	public function clearBalanceLogsRelatedByPurchaseId()
+	{
+		$this->collBalanceLogsRelatedByPurchaseId = null; // important to set this to NULL since that means it is uninitialized
+	}
+
+	/**
+	 * Initializes the collBalanceLogsRelatedByPurchaseId collection.
+	 *
+	 * By default this just sets the collBalanceLogsRelatedByPurchaseId collection to an empty array (like clearcollBalanceLogsRelatedByPurchaseId());
+	 * however, you may wish to override this method in your stub class to provide setting appropriate
+	 * to your application -- for example, setting the initial array to the values stored in database.
+	 *
+	 * @return     void
+	 */
+	public function initBalanceLogsRelatedByPurchaseId()
+	{
+		$this->collBalanceLogsRelatedByPurchaseId = new PropelObjectCollection();
+		$this->collBalanceLogsRelatedByPurchaseId->setModel('BalanceLog');
+	}
+
+	/**
+	 * Gets an array of BalanceLog objects which contain a foreign key that references this object.
+	 *
+	 * If the $criteria is not null, it is used to always fetch the results from the database.
+	 * Otherwise the results are fetched from the database the first time, then cached.
+	 * Next time the same method is called without $criteria, the cached collection is returned.
+	 * If this Purchase is new, it will return
+	 * an empty collection or the current collection; the criteria is ignored on a new object.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 * @throws     PropelException
+	 */
+	public function getBalanceLogsRelatedByPurchaseId($criteria = null, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogsRelatedByPurchaseId || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogsRelatedByPurchaseId) {
+				// return empty collection
+				$this->initBalanceLogsRelatedByPurchaseId();
+			} else {
+				$collBalanceLogsRelatedByPurchaseId = BalanceLogQuery::create(null, $criteria)
+					->filterByPurchase($this)
+					->find($con);
+				if (null !== $criteria) {
+					return $collBalanceLogsRelatedByPurchaseId;
+				}
+				$this->collBalanceLogsRelatedByPurchaseId = $collBalanceLogsRelatedByPurchaseId;
+			}
+		}
+		return $this->collBalanceLogsRelatedByPurchaseId;
+	}
+
+	/**
+	 * Returns the number of related BalanceLog objects.
+	 *
+	 * @param      Criteria $criteria
+	 * @param      boolean $distinct
+	 * @param      PropelPDO $con
+	 * @return     int Count of related BalanceLog objects.
+	 * @throws     PropelException
+	 */
+	public function countBalanceLogsRelatedByPurchaseId(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogsRelatedByPurchaseId || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogsRelatedByPurchaseId) {
+				return 0;
+			} else {
+				$query = BalanceLogQuery::create(null, $criteria);
+				if($distinct) {
+					$query->distinct();
+				}
+				return $query
+					->filterByPurchase($this)
+					->count($con);
+			}
+		} else {
+			return count($this->collBalanceLogsRelatedByPurchaseId);
+		}
+	}
+
+	/**
+	 * Method called to associate a BalanceLog object to this object
+	 * through the BalanceLog foreign key attribute.
+	 *
+	 * @param      BalanceLog $l BalanceLog
+	 * @return     void
+	 * @throws     PropelException
+	 */
+	public function addBalanceLogRelatedByPurchaseId(BalanceLog $l)
+	{
+		if ($this->collBalanceLogsRelatedByPurchaseId === null) {
+			$this->initBalanceLogsRelatedByPurchaseId();
+		}
+		if (!$this->collBalanceLogsRelatedByPurchaseId->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collBalanceLogsRelatedByPurchaseId[]= $l;
+			$l->setPurchase($this);
+		}
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Purchase is new, it will return
+	 * an empty collection; or if this Purchase has previously
+	 * been saved, it will retrieve related BalanceLogsRelatedByPurchaseId from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Purchase.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsRelatedByPurchaseIdJoinUser($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('User', $join_behavior);
+
+		return $this->getBalanceLogsRelatedByPurchaseId($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Purchase is new, it will return
+	 * an empty collection; or if this Purchase has previously
+	 * been saved, it will retrieve related BalanceLogsRelatedByPurchaseId from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Purchase.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsRelatedByPurchaseIdJoinDeposit($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Deposit', $join_behavior);
+
+		return $this->getBalanceLogsRelatedByPurchaseId($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Purchase is new, it will return
+	 * an empty collection; or if this Purchase has previously
+	 * been saved, it will retrieve related BalanceLogsRelatedByPurchaseId from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Purchase.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsRelatedByPurchaseIdJoinTransfer($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Transfer', $join_behavior);
+
+		return $this->getBalanceLogsRelatedByPurchaseId($query, $con);
+	}
+
+	/**
+	 * Clears out the collBalanceLogsRelatedBySellId collection
+	 *
+	 * This does not modify the database; however, it will remove any associated objects, causing
+	 * them to be refetched by subsequent calls to accessor method.
+	 *
+	 * @return     void
+	 * @see        addBalanceLogsRelatedBySellId()
+	 */
+	public function clearBalanceLogsRelatedBySellId()
+	{
+		$this->collBalanceLogsRelatedBySellId = null; // important to set this to NULL since that means it is uninitialized
+	}
+
+	/**
+	 * Initializes the collBalanceLogsRelatedBySellId collection.
+	 *
+	 * By default this just sets the collBalanceLogsRelatedBySellId collection to an empty array (like clearcollBalanceLogsRelatedBySellId());
+	 * however, you may wish to override this method in your stub class to provide setting appropriate
+	 * to your application -- for example, setting the initial array to the values stored in database.
+	 *
+	 * @return     void
+	 */
+	public function initBalanceLogsRelatedBySellId()
+	{
+		$this->collBalanceLogsRelatedBySellId = new PropelObjectCollection();
+		$this->collBalanceLogsRelatedBySellId->setModel('BalanceLog');
+	}
+
+	/**
+	 * Gets an array of BalanceLog objects which contain a foreign key that references this object.
+	 *
+	 * If the $criteria is not null, it is used to always fetch the results from the database.
+	 * Otherwise the results are fetched from the database the first time, then cached.
+	 * Next time the same method is called without $criteria, the cached collection is returned.
+	 * If this Purchase is new, it will return
+	 * an empty collection or the current collection; the criteria is ignored on a new object.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 * @throws     PropelException
+	 */
+	public function getBalanceLogsRelatedBySellId($criteria = null, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogsRelatedBySellId || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogsRelatedBySellId) {
+				// return empty collection
+				$this->initBalanceLogsRelatedBySellId();
+			} else {
+				$collBalanceLogsRelatedBySellId = BalanceLogQuery::create(null, $criteria)
+					->filterBySale($this)
+					->find($con);
+				if (null !== $criteria) {
+					return $collBalanceLogsRelatedBySellId;
+				}
+				$this->collBalanceLogsRelatedBySellId = $collBalanceLogsRelatedBySellId;
+			}
+		}
+		return $this->collBalanceLogsRelatedBySellId;
+	}
+
+	/**
+	 * Returns the number of related BalanceLog objects.
+	 *
+	 * @param      Criteria $criteria
+	 * @param      boolean $distinct
+	 * @param      PropelPDO $con
+	 * @return     int Count of related BalanceLog objects.
+	 * @throws     PropelException
+	 */
+	public function countBalanceLogsRelatedBySellId(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogsRelatedBySellId || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogsRelatedBySellId) {
+				return 0;
+			} else {
+				$query = BalanceLogQuery::create(null, $criteria);
+				if($distinct) {
+					$query->distinct();
+				}
+				return $query
+					->filterBySale($this)
+					->count($con);
+			}
+		} else {
+			return count($this->collBalanceLogsRelatedBySellId);
+		}
+	}
+
+	/**
+	 * Method called to associate a BalanceLog object to this object
+	 * through the BalanceLog foreign key attribute.
+	 *
+	 * @param      BalanceLog $l BalanceLog
+	 * @return     void
+	 * @throws     PropelException
+	 */
+	public function addBalanceLogRelatedBySellId(BalanceLog $l)
+	{
+		if ($this->collBalanceLogsRelatedBySellId === null) {
+			$this->initBalanceLogsRelatedBySellId();
+		}
+		if (!$this->collBalanceLogsRelatedBySellId->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collBalanceLogsRelatedBySellId[]= $l;
+			$l->setSale($this);
+		}
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Purchase is new, it will return
+	 * an empty collection; or if this Purchase has previously
+	 * been saved, it will retrieve related BalanceLogsRelatedBySellId from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Purchase.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsRelatedBySellIdJoinUser($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('User', $join_behavior);
+
+		return $this->getBalanceLogsRelatedBySellId($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Purchase is new, it will return
+	 * an empty collection; or if this Purchase has previously
+	 * been saved, it will retrieve related BalanceLogsRelatedBySellId from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Purchase.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsRelatedBySellIdJoinDeposit($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Deposit', $join_behavior);
+
+		return $this->getBalanceLogsRelatedBySellId($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Purchase is new, it will return
+	 * an empty collection; or if this Purchase has previously
+	 * been saved, it will retrieve related BalanceLogsRelatedBySellId from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Purchase.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsRelatedBySellIdJoinTransfer($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Transfer', $join_behavior);
+
+		return $this->getBalanceLogsRelatedBySellId($query, $con);
+	}
+
+	/**
 	 * Clears the current object and sets all attributes to their default values
 	 */
 	public function clear()
@@ -1251,8 +1683,20 @@ abstract class BasePurchase extends BaseObject  implements Persistent
 	public function clearAllReferences($deep = false)
 	{
 		if ($deep) {
+			if ($this->collBalanceLogsRelatedByPurchaseId) {
+				foreach ((array) $this->collBalanceLogsRelatedByPurchaseId as $o) {
+					$o->clearAllReferences($deep);
+				}
+			}
+			if ($this->collBalanceLogsRelatedBySellId) {
+				foreach ((array) $this->collBalanceLogsRelatedBySellId as $o) {
+					$o->clearAllReferences($deep);
+				}
+			}
 		} // if ($deep)
 
+		$this->collBalanceLogsRelatedByPurchaseId = null;
+		$this->collBalanceLogsRelatedBySellId = null;
 		$this->aUser = null;
 		$this->aStock = null;
 		$this->aItem = null;

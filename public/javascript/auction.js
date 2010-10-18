@@ -133,7 +133,6 @@ function screen(data) {
       }
     }
   });
-
   return screened_data;
 }
 

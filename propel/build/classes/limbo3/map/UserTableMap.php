@@ -39,6 +39,7 @@ class UserTableMap extends TableMap {
 		// columns
 		$this->addPrimaryKey('ID', 'Id', 'INTEGER', true, null, null);
 		$this->addColumn('USERNAME', 'Username', 'VARCHAR', true, 255, null);
+		$this->addColumn('PANDORA_USERNAME', 'PandoraUsername', 'VARCHAR', false, 255, null);
 		$this->addColumn('REAL_NAME', 'RealName', 'VARCHAR', false, 255, null);
 		$this->addColumn('EMAIL', 'Email', 'VARCHAR', false, 255, null);
 		$this->addColumn('BALANCE', 'Balance', 'DOUBLE', true, null, 0);
@@ -51,10 +52,12 @@ class UserTableMap extends TableMap {
 	 */
 	public function buildRelations()
 	{
+    $this->addRelation('BalanceLog', 'BalanceLog', RelationMap::ONE_TO_ONE, array('id' => 'id', ), null, null);
     $this->addRelation('Stock', 'Stock', RelationMap::ONE_TO_MANY, array('id' => 'user_id', ), null, null);
     $this->addRelation('Purchase', 'Purchase', RelationMap::ONE_TO_MANY, array('id' => 'user_id', ), null, null);
-    $this->addRelation('TransferRelatedByFrom', 'Transfer', RelationMap::ONE_TO_MANY, array('id' => 'from', ), null, null);
-    $this->addRelation('TransferRelatedByTo', 'Transfer', RelationMap::ONE_TO_MANY, array('id' => 'to', ), null, null);
+    $this->addRelation('Deposit', 'Deposit', RelationMap::ONE_TO_MANY, array('id' => 'user_id', ), null, null);
+    $this->addRelation('TransferRelatedByFromUser', 'Transfer', RelationMap::ONE_TO_MANY, array('id' => 'from_user', ), null, null);
+    $this->addRelation('TransferRelatedByToUser', 'Transfer', RelationMap::ONE_TO_MANY, array('id' => 'to_user', ), null, null);
 	} // buildRelations()
 
 } // UserTableMap

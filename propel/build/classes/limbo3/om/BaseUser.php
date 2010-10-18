@@ -37,6 +37,12 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	protected $username;
 
 	/**
+	 * The value for the pandora_username field.
+	 * @var        string
+	 */
+	protected $pandora_username;
+
+	/**
 	 * The value for the real_name field.
 	 * @var        string
 	 */
@@ -63,6 +69,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	protected $created;
 
 	/**
+	 * @var        BalanceLog one-to-one related BalanceLog object
+	 */
+	protected $singleBalanceLog;
+
+	/**
 	 * @var        array Stock[] Collection to store aggregation of Stock objects.
 	 */
 	protected $collStocks;
@@ -73,14 +84,19 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	protected $collPurchases;
 
 	/**
-	 * @var        array Transfer[] Collection to store aggregation of Transfer objects.
+	 * @var        array Deposit[] Collection to store aggregation of Deposit objects.
 	 */
-	protected $collTransfersRelatedByFrom;
+	protected $collDeposits;
 
 	/**
 	 * @var        array Transfer[] Collection to store aggregation of Transfer objects.
 	 */
-	protected $collTransfersRelatedByTo;
+	protected $collTransfersRelatedByFromUser;
+
+	/**
+	 * @var        array Transfer[] Collection to store aggregation of Transfer objects.
+	 */
+	protected $collTransfersRelatedByToUser;
 
 	/**
 	 * Flag to prevent endless save loop, if this object is referenced
@@ -135,6 +151,16 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	public function getUsername()
 	{
 		return $this->username;
+	}
+
+	/**
+	 * Get the [pandora_username] column value.
+	 * 
+	 * @return     string
+	 */
+	public function getPandoraUsername()
+	{
+		return $this->pandora_username;
 	}
 
 	/**
@@ -239,6 +265,26 @@ abstract class BaseUser extends BaseObject  implements Persistent
 
 		return $this;
 	} // setUsername()
+
+	/**
+	 * Set the value of [pandora_username] column.
+	 * 
+	 * @param      string $v new value
+	 * @return     User The current object (for fluent API support)
+	 */
+	public function setPandoraUsername($v)
+	{
+		if ($v !== null) {
+			$v = (string) $v;
+		}
+
+		if ($this->pandora_username !== $v) {
+			$this->pandora_username = $v;
+			$this->modifiedColumns[] = UserPeer::PANDORA_USERNAME;
+		}
+
+		return $this;
+	} // setPandoraUsername()
 
 	/**
 	 * Set the value of [real_name] column.
@@ -387,10 +433,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 
 			$this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
 			$this->username = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
-			$this->real_name = ($row[$startcol + 2] !== null) ? (string) $row[$startcol + 2] : null;
-			$this->email = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
-			$this->balance = ($row[$startcol + 4] !== null) ? (double) $row[$startcol + 4] : null;
-			$this->created = ($row[$startcol + 5] !== null) ? (string) $row[$startcol + 5] : null;
+			$this->pandora_username = ($row[$startcol + 2] !== null) ? (string) $row[$startcol + 2] : null;
+			$this->real_name = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
+			$this->email = ($row[$startcol + 4] !== null) ? (string) $row[$startcol + 4] : null;
+			$this->balance = ($row[$startcol + 5] !== null) ? (double) $row[$startcol + 5] : null;
+			$this->created = ($row[$startcol + 6] !== null) ? (string) $row[$startcol + 6] : null;
 			$this->resetModified();
 
 			$this->setNew(false);
@@ -399,7 +446,7 @@ abstract class BaseUser extends BaseObject  implements Persistent
 				$this->ensureConsistency();
 			}
 
-			return $startcol + 6; // 6 = UserPeer::NUM_COLUMNS - UserPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 7; // 7 = UserPeer::NUM_COLUMNS - UserPeer::NUM_LAZY_LOAD_COLUMNS).
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating User object", $e);
@@ -460,10 +507,12 @@ abstract class BaseUser extends BaseObject  implements Persistent
 		$this->hydrate($row, 0, true); // rehydrate
 
 		if ($deep) {  // also de-associate any related objects?
+			$this->singleBalanceLog = null;
 			$this->collStocks = null;
 			$this->collPurchases = null;
-			$this->collTransfersRelatedByFrom = null;
-			$this->collTransfersRelatedByTo = null;
+			$this->collDeposits = null;
+			$this->collTransfersRelatedByFromUser = null;
+			$this->collTransfersRelatedByToUser = null;
 		} // if (deep)
 	}
 
@@ -597,6 +646,12 @@ abstract class BaseUser extends BaseObject  implements Persistent
 				$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
 			}
 
+			if ($this->singleBalanceLog !== null) {
+				if (!$this->singleBalanceLog->isDeleted()) {
+						$affectedRows += $this->singleBalanceLog->save($con);
+				}
+			}
+
 			if ($this->collStocks !== null) {
 				foreach ($this->collStocks as $referrerFK) {
 					if (!$referrerFK->isDeleted()) {
@@ -613,16 +668,24 @@ abstract class BaseUser extends BaseObject  implements Persistent
 				}
 			}
 
-			if ($this->collTransfersRelatedByFrom !== null) {
-				foreach ($this->collTransfersRelatedByFrom as $referrerFK) {
+			if ($this->collDeposits !== null) {
+				foreach ($this->collDeposits as $referrerFK) {
 					if (!$referrerFK->isDeleted()) {
 						$affectedRows += $referrerFK->save($con);
 					}
 				}
 			}
 
-			if ($this->collTransfersRelatedByTo !== null) {
-				foreach ($this->collTransfersRelatedByTo as $referrerFK) {
+			if ($this->collTransfersRelatedByFromUser !== null) {
+				foreach ($this->collTransfersRelatedByFromUser as $referrerFK) {
+					if (!$referrerFK->isDeleted()) {
+						$affectedRows += $referrerFK->save($con);
+					}
+				}
+			}
+
+			if ($this->collTransfersRelatedByToUser !== null) {
+				foreach ($this->collTransfersRelatedByToUser as $referrerFK) {
 					if (!$referrerFK->isDeleted()) {
 						$affectedRows += $referrerFK->save($con);
 					}
@@ -700,6 +763,12 @@ abstract class BaseUser extends BaseObject  implements Persistent
 			}
 
 
+				if ($this->singleBalanceLog !== null) {
+					if (!$this->singleBalanceLog->validate($columns)) {
+						$failureMap = array_merge($failureMap, $this->singleBalanceLog->getValidationFailures());
+					}
+				}
+
 				if ($this->collStocks !== null) {
 					foreach ($this->collStocks as $referrerFK) {
 						if (!$referrerFK->validate($columns)) {
@@ -716,16 +785,24 @@ abstract class BaseUser extends BaseObject  implements Persistent
 					}
 				}
 
-				if ($this->collTransfersRelatedByFrom !== null) {
-					foreach ($this->collTransfersRelatedByFrom as $referrerFK) {
+				if ($this->collDeposits !== null) {
+					foreach ($this->collDeposits as $referrerFK) {
 						if (!$referrerFK->validate($columns)) {
 							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
 						}
 					}
 				}
 
-				if ($this->collTransfersRelatedByTo !== null) {
-					foreach ($this->collTransfersRelatedByTo as $referrerFK) {
+				if ($this->collTransfersRelatedByFromUser !== null) {
+					foreach ($this->collTransfersRelatedByFromUser as $referrerFK) {
+						if (!$referrerFK->validate($columns)) {
+							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
+						}
+					}
+				}
+
+				if ($this->collTransfersRelatedByToUser !== null) {
+					foreach ($this->collTransfersRelatedByToUser as $referrerFK) {
 						if (!$referrerFK->validate($columns)) {
 							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
 						}
@@ -772,15 +849,18 @@ abstract class BaseUser extends BaseObject  implements Persistent
 				return $this->getUsername();
 				break;
 			case 2:
-				return $this->getRealName();
+				return $this->getPandoraUsername();
 				break;
 			case 3:
-				return $this->getEmail();
+				return $this->getRealName();
 				break;
 			case 4:
-				return $this->getBalance();
+				return $this->getEmail();
 				break;
 			case 5:
+				return $this->getBalance();
+				break;
+			case 6:
 				return $this->getCreated();
 				break;
 			default:
@@ -808,10 +888,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 		$result = array(
 			$keys[0] => $this->getId(),
 			$keys[1] => $this->getUsername(),
-			$keys[2] => $this->getRealName(),
-			$keys[3] => $this->getEmail(),
-			$keys[4] => $this->getBalance(),
-			$keys[5] => $this->getCreated(),
+			$keys[2] => $this->getPandoraUsername(),
+			$keys[3] => $this->getRealName(),
+			$keys[4] => $this->getEmail(),
+			$keys[5] => $this->getBalance(),
+			$keys[6] => $this->getCreated(),
 		);
 		return $result;
 	}
@@ -850,15 +931,18 @@ abstract class BaseUser extends BaseObject  implements Persistent
 				$this->setUsername($value);
 				break;
 			case 2:
-				$this->setRealName($value);
+				$this->setPandoraUsername($value);
 				break;
 			case 3:
-				$this->setEmail($value);
+				$this->setRealName($value);
 				break;
 			case 4:
-				$this->setBalance($value);
+				$this->setEmail($value);
 				break;
 			case 5:
+				$this->setBalance($value);
+				break;
+			case 6:
 				$this->setCreated($value);
 				break;
 		} // switch()
@@ -887,10 +971,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 
 		if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
 		if (array_key_exists($keys[1], $arr)) $this->setUsername($arr[$keys[1]]);
-		if (array_key_exists($keys[2], $arr)) $this->setRealName($arr[$keys[2]]);
-		if (array_key_exists($keys[3], $arr)) $this->setEmail($arr[$keys[3]]);
-		if (array_key_exists($keys[4], $arr)) $this->setBalance($arr[$keys[4]]);
-		if (array_key_exists($keys[5], $arr)) $this->setCreated($arr[$keys[5]]);
+		if (array_key_exists($keys[2], $arr)) $this->setPandoraUsername($arr[$keys[2]]);
+		if (array_key_exists($keys[3], $arr)) $this->setRealName($arr[$keys[3]]);
+		if (array_key_exists($keys[4], $arr)) $this->setEmail($arr[$keys[4]]);
+		if (array_key_exists($keys[5], $arr)) $this->setBalance($arr[$keys[5]]);
+		if (array_key_exists($keys[6], $arr)) $this->setCreated($arr[$keys[6]]);
 	}
 
 	/**
@@ -904,6 +989,7 @@ abstract class BaseUser extends BaseObject  implements Persistent
 
 		if ($this->isColumnModified(UserPeer::ID)) $criteria->add(UserPeer::ID, $this->id);
 		if ($this->isColumnModified(UserPeer::USERNAME)) $criteria->add(UserPeer::USERNAME, $this->username);
+		if ($this->isColumnModified(UserPeer::PANDORA_USERNAME)) $criteria->add(UserPeer::PANDORA_USERNAME, $this->pandora_username);
 		if ($this->isColumnModified(UserPeer::REAL_NAME)) $criteria->add(UserPeer::REAL_NAME, $this->real_name);
 		if ($this->isColumnModified(UserPeer::EMAIL)) $criteria->add(UserPeer::EMAIL, $this->email);
 		if ($this->isColumnModified(UserPeer::BALANCE)) $criteria->add(UserPeer::BALANCE, $this->balance);
@@ -970,6 +1056,7 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	public function copyInto($copyObj, $deepCopy = false)
 	{
 		$copyObj->setUsername($this->username);
+		$copyObj->setPandoraUsername($this->pandora_username);
 		$copyObj->setRealName($this->real_name);
 		$copyObj->setEmail($this->email);
 		$copyObj->setBalance($this->balance);
@@ -979,6 +1066,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 			// important: temporarily setNew(false) because this affects the behavior of
 			// the getter/setter methods for fkey referrer objects.
 			$copyObj->setNew(false);
+
+			$relObj = $this->getBalanceLog();
+			if ($relObj) {
+				$copyObj->setBalanceLog($relObj->copy($deepCopy));
+			}
 
 			foreach ($this->getStocks() as $relObj) {
 				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
@@ -992,15 +1084,21 @@ abstract class BaseUser extends BaseObject  implements Persistent
 				}
 			}
 
-			foreach ($this->getTransfersRelatedByFrom() as $relObj) {
+			foreach ($this->getDeposits() as $relObj) {
 				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
-					$copyObj->addTransferRelatedByFrom($relObj->copy($deepCopy));
+					$copyObj->addDeposit($relObj->copy($deepCopy));
 				}
 			}
 
-			foreach ($this->getTransfersRelatedByTo() as $relObj) {
+			foreach ($this->getTransfersRelatedByFromUser() as $relObj) {
 				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
-					$copyObj->addTransferRelatedByTo($relObj->copy($deepCopy));
+					$copyObj->addTransferRelatedByFromUser($relObj->copy($deepCopy));
+				}
+			}
+
+			foreach ($this->getTransfersRelatedByToUser() as $relObj) {
+				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+					$copyObj->addTransferRelatedByToUser($relObj->copy($deepCopy));
 				}
 			}
 
@@ -1047,6 +1145,42 @@ abstract class BaseUser extends BaseObject  implements Persistent
 			self::$peer = new UserPeer();
 		}
 		return self::$peer;
+	}
+
+	/**
+	 * Gets a single BalanceLog object, which is related to this object by a one-to-one relationship.
+	 *
+	 * @param      PropelPDO $con optional connection object
+	 * @return     BalanceLog
+	 * @throws     PropelException
+	 */
+	public function getBalanceLog(PropelPDO $con = null)
+	{
+
+		if ($this->singleBalanceLog === null && !$this->isNew()) {
+			$this->singleBalanceLog = BalanceLogQuery::create()->findPk($this->getPrimaryKey(), $con);
+		}
+
+		return $this->singleBalanceLog;
+	}
+
+	/**
+	 * Sets a single BalanceLog object as related to this object by a one-to-one relationship.
+	 *
+	 * @param      BalanceLog $v BalanceLog
+	 * @return     User The current object (for fluent API support)
+	 * @throws     PropelException
+	 */
+	public function setBalanceLog(BalanceLog $v = null)
+	{
+		$this->singleBalanceLog = $v;
+
+		// Make sure that that the passed-in BalanceLog isn't already associated with this object
+		if ($v !== null && $v->getUser() === null) {
+			$v->setUser($this);
+		}
+
+		return $this;
 	}
 
 	/**
@@ -1343,32 +1477,141 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	}
 
 	/**
-	 * Clears out the collTransfersRelatedByFrom collection
+	 * Clears out the collDeposits collection
 	 *
 	 * This does not modify the database; however, it will remove any associated objects, causing
 	 * them to be refetched by subsequent calls to accessor method.
 	 *
 	 * @return     void
-	 * @see        addTransfersRelatedByFrom()
+	 * @see        addDeposits()
 	 */
-	public function clearTransfersRelatedByFrom()
+	public function clearDeposits()
 	{
-		$this->collTransfersRelatedByFrom = null; // important to set this to NULL since that means it is uninitialized
+		$this->collDeposits = null; // important to set this to NULL since that means it is uninitialized
 	}
 
 	/**
-	 * Initializes the collTransfersRelatedByFrom collection.
+	 * Initializes the collDeposits collection.
 	 *
-	 * By default this just sets the collTransfersRelatedByFrom collection to an empty array (like clearcollTransfersRelatedByFrom());
+	 * By default this just sets the collDeposits collection to an empty array (like clearcollDeposits());
 	 * however, you may wish to override this method in your stub class to provide setting appropriate
 	 * to your application -- for example, setting the initial array to the values stored in database.
 	 *
 	 * @return     void
 	 */
-	public function initTransfersRelatedByFrom()
+	public function initDeposits()
 	{
-		$this->collTransfersRelatedByFrom = new PropelObjectCollection();
-		$this->collTransfersRelatedByFrom->setModel('Transfer');
+		$this->collDeposits = new PropelObjectCollection();
+		$this->collDeposits->setModel('Deposit');
+	}
+
+	/**
+	 * Gets an array of Deposit objects which contain a foreign key that references this object.
+	 *
+	 * If the $criteria is not null, it is used to always fetch the results from the database.
+	 * Otherwise the results are fetched from the database the first time, then cached.
+	 * Next time the same method is called without $criteria, the cached collection is returned.
+	 * If this User is new, it will return
+	 * an empty collection or the current collection; the criteria is ignored on a new object.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @return     PropelCollection|array Deposit[] List of Deposit objects
+	 * @throws     PropelException
+	 */
+	public function getDeposits($criteria = null, PropelPDO $con = null)
+	{
+		if(null === $this->collDeposits || null !== $criteria) {
+			if ($this->isNew() && null === $this->collDeposits) {
+				// return empty collection
+				$this->initDeposits();
+			} else {
+				$collDeposits = DepositQuery::create(null, $criteria)
+					->filterByUser($this)
+					->find($con);
+				if (null !== $criteria) {
+					return $collDeposits;
+				}
+				$this->collDeposits = $collDeposits;
+			}
+		}
+		return $this->collDeposits;
+	}
+
+	/**
+	 * Returns the number of related Deposit objects.
+	 *
+	 * @param      Criteria $criteria
+	 * @param      boolean $distinct
+	 * @param      PropelPDO $con
+	 * @return     int Count of related Deposit objects.
+	 * @throws     PropelException
+	 */
+	public function countDeposits(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	{
+		if(null === $this->collDeposits || null !== $criteria) {
+			if ($this->isNew() && null === $this->collDeposits) {
+				return 0;
+			} else {
+				$query = DepositQuery::create(null, $criteria);
+				if($distinct) {
+					$query->distinct();
+				}
+				return $query
+					->filterByUser($this)
+					->count($con);
+			}
+		} else {
+			return count($this->collDeposits);
+		}
+	}
+
+	/**
+	 * Method called to associate a Deposit object to this object
+	 * through the Deposit foreign key attribute.
+	 *
+	 * @param      Deposit $l Deposit
+	 * @return     void
+	 * @throws     PropelException
+	 */
+	public function addDeposit(Deposit $l)
+	{
+		if ($this->collDeposits === null) {
+			$this->initDeposits();
+		}
+		if (!$this->collDeposits->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collDeposits[]= $l;
+			$l->setUser($this);
+		}
+	}
+
+	/**
+	 * Clears out the collTransfersRelatedByFromUser collection
+	 *
+	 * This does not modify the database; however, it will remove any associated objects, causing
+	 * them to be refetched by subsequent calls to accessor method.
+	 *
+	 * @return     void
+	 * @see        addTransfersRelatedByFromUser()
+	 */
+	public function clearTransfersRelatedByFromUser()
+	{
+		$this->collTransfersRelatedByFromUser = null; // important to set this to NULL since that means it is uninitialized
+	}
+
+	/**
+	 * Initializes the collTransfersRelatedByFromUser collection.
+	 *
+	 * By default this just sets the collTransfersRelatedByFromUser collection to an empty array (like clearcollTransfersRelatedByFromUser());
+	 * however, you may wish to override this method in your stub class to provide setting appropriate
+	 * to your application -- for example, setting the initial array to the values stored in database.
+	 *
+	 * @return     void
+	 */
+	public function initTransfersRelatedByFromUser()
+	{
+		$this->collTransfersRelatedByFromUser = new PropelObjectCollection();
+		$this->collTransfersRelatedByFromUser->setModel('Transfer');
 	}
 
 	/**
@@ -1385,23 +1628,23 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	 * @return     PropelCollection|array Transfer[] List of Transfer objects
 	 * @throws     PropelException
 	 */
-	public function getTransfersRelatedByFrom($criteria = null, PropelPDO $con = null)
+	public function getTransfersRelatedByFromUser($criteria = null, PropelPDO $con = null)
 	{
-		if(null === $this->collTransfersRelatedByFrom || null !== $criteria) {
-			if ($this->isNew() && null === $this->collTransfersRelatedByFrom) {
+		if(null === $this->collTransfersRelatedByFromUser || null !== $criteria) {
+			if ($this->isNew() && null === $this->collTransfersRelatedByFromUser) {
 				// return empty collection
-				$this->initTransfersRelatedByFrom();
+				$this->initTransfersRelatedByFromUser();
 			} else {
-				$collTransfersRelatedByFrom = TransferQuery::create(null, $criteria)
-					->filterByUserRelatedByFrom($this)
+				$collTransfersRelatedByFromUser = TransferQuery::create(null, $criteria)
+					->filterByUserFrom($this)
 					->find($con);
 				if (null !== $criteria) {
-					return $collTransfersRelatedByFrom;
+					return $collTransfersRelatedByFromUser;
 				}
-				$this->collTransfersRelatedByFrom = $collTransfersRelatedByFrom;
+				$this->collTransfersRelatedByFromUser = $collTransfersRelatedByFromUser;
 			}
 		}
-		return $this->collTransfersRelatedByFrom;
+		return $this->collTransfersRelatedByFromUser;
 	}
 
 	/**
@@ -1413,10 +1656,10 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	 * @return     int Count of related Transfer objects.
 	 * @throws     PropelException
 	 */
-	public function countTransfersRelatedByFrom(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	public function countTransfersRelatedByFromUser(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
 	{
-		if(null === $this->collTransfersRelatedByFrom || null !== $criteria) {
-			if ($this->isNew() && null === $this->collTransfersRelatedByFrom) {
+		if(null === $this->collTransfersRelatedByFromUser || null !== $criteria) {
+			if ($this->isNew() && null === $this->collTransfersRelatedByFromUser) {
 				return 0;
 			} else {
 				$query = TransferQuery::create(null, $criteria);
@@ -1424,11 +1667,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 					$query->distinct();
 				}
 				return $query
-					->filterByUserRelatedByFrom($this)
+					->filterByUserFrom($this)
 					->count($con);
 			}
 		} else {
-			return count($this->collTransfersRelatedByFrom);
+			return count($this->collTransfersRelatedByFromUser);
 		}
 	}
 
@@ -1440,44 +1683,44 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	 * @return     void
 	 * @throws     PropelException
 	 */
-	public function addTransferRelatedByFrom(Transfer $l)
+	public function addTransferRelatedByFromUser(Transfer $l)
 	{
-		if ($this->collTransfersRelatedByFrom === null) {
-			$this->initTransfersRelatedByFrom();
+		if ($this->collTransfersRelatedByFromUser === null) {
+			$this->initTransfersRelatedByFromUser();
 		}
-		if (!$this->collTransfersRelatedByFrom->contains($l)) { // only add it if the **same** object is not already associated
-			$this->collTransfersRelatedByFrom[]= $l;
-			$l->setUserRelatedByFrom($this);
+		if (!$this->collTransfersRelatedByFromUser->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collTransfersRelatedByFromUser[]= $l;
+			$l->setUserFrom($this);
 		}
 	}
 
 	/**
-	 * Clears out the collTransfersRelatedByTo collection
+	 * Clears out the collTransfersRelatedByToUser collection
 	 *
 	 * This does not modify the database; however, it will remove any associated objects, causing
 	 * them to be refetched by subsequent calls to accessor method.
 	 *
 	 * @return     void
-	 * @see        addTransfersRelatedByTo()
+	 * @see        addTransfersRelatedByToUser()
 	 */
-	public function clearTransfersRelatedByTo()
+	public function clearTransfersRelatedByToUser()
 	{
-		$this->collTransfersRelatedByTo = null; // important to set this to NULL since that means it is uninitialized
+		$this->collTransfersRelatedByToUser = null; // important to set this to NULL since that means it is uninitialized
 	}
 
 	/**
-	 * Initializes the collTransfersRelatedByTo collection.
+	 * Initializes the collTransfersRelatedByToUser collection.
 	 *
-	 * By default this just sets the collTransfersRelatedByTo collection to an empty array (like clearcollTransfersRelatedByTo());
+	 * By default this just sets the collTransfersRelatedByToUser collection to an empty array (like clearcollTransfersRelatedByToUser());
 	 * however, you may wish to override this method in your stub class to provide setting appropriate
 	 * to your application -- for example, setting the initial array to the values stored in database.
 	 *
 	 * @return     void
 	 */
-	public function initTransfersRelatedByTo()
+	public function initTransfersRelatedByToUser()
 	{
-		$this->collTransfersRelatedByTo = new PropelObjectCollection();
-		$this->collTransfersRelatedByTo->setModel('Transfer');
+		$this->collTransfersRelatedByToUser = new PropelObjectCollection();
+		$this->collTransfersRelatedByToUser->setModel('Transfer');
 	}
 
 	/**
@@ -1494,23 +1737,23 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	 * @return     PropelCollection|array Transfer[] List of Transfer objects
 	 * @throws     PropelException
 	 */
-	public function getTransfersRelatedByTo($criteria = null, PropelPDO $con = null)
+	public function getTransfersRelatedByToUser($criteria = null, PropelPDO $con = null)
 	{
-		if(null === $this->collTransfersRelatedByTo || null !== $criteria) {
-			if ($this->isNew() && null === $this->collTransfersRelatedByTo) {
+		if(null === $this->collTransfersRelatedByToUser || null !== $criteria) {
+			if ($this->isNew() && null === $this->collTransfersRelatedByToUser) {
 				// return empty collection
-				$this->initTransfersRelatedByTo();
+				$this->initTransfersRelatedByToUser();
 			} else {
-				$collTransfersRelatedByTo = TransferQuery::create(null, $criteria)
-					->filterByUserRelatedByTo($this)
+				$collTransfersRelatedByToUser = TransferQuery::create(null, $criteria)
+					->filterByUserTo($this)
 					->find($con);
 				if (null !== $criteria) {
-					return $collTransfersRelatedByTo;
+					return $collTransfersRelatedByToUser;
 				}
-				$this->collTransfersRelatedByTo = $collTransfersRelatedByTo;
+				$this->collTransfersRelatedByToUser = $collTransfersRelatedByToUser;
 			}
 		}
-		return $this->collTransfersRelatedByTo;
+		return $this->collTransfersRelatedByToUser;
 	}
 
 	/**
@@ -1522,10 +1765,10 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	 * @return     int Count of related Transfer objects.
 	 * @throws     PropelException
 	 */
-	public function countTransfersRelatedByTo(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	public function countTransfersRelatedByToUser(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
 	{
-		if(null === $this->collTransfersRelatedByTo || null !== $criteria) {
-			if ($this->isNew() && null === $this->collTransfersRelatedByTo) {
+		if(null === $this->collTransfersRelatedByToUser || null !== $criteria) {
+			if ($this->isNew() && null === $this->collTransfersRelatedByToUser) {
 				return 0;
 			} else {
 				$query = TransferQuery::create(null, $criteria);
@@ -1533,11 +1776,11 @@ abstract class BaseUser extends BaseObject  implements Persistent
 					$query->distinct();
 				}
 				return $query
-					->filterByUserRelatedByTo($this)
+					->filterByUserTo($this)
 					->count($con);
 			}
 		} else {
-			return count($this->collTransfersRelatedByTo);
+			return count($this->collTransfersRelatedByToUser);
 		}
 	}
 
@@ -1549,14 +1792,14 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	 * @return     void
 	 * @throws     PropelException
 	 */
-	public function addTransferRelatedByTo(Transfer $l)
+	public function addTransferRelatedByToUser(Transfer $l)
 	{
-		if ($this->collTransfersRelatedByTo === null) {
-			$this->initTransfersRelatedByTo();
+		if ($this->collTransfersRelatedByToUser === null) {
+			$this->initTransfersRelatedByToUser();
 		}
-		if (!$this->collTransfersRelatedByTo->contains($l)) { // only add it if the **same** object is not already associated
-			$this->collTransfersRelatedByTo[]= $l;
-			$l->setUserRelatedByTo($this);
+		if (!$this->collTransfersRelatedByToUser->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collTransfersRelatedByToUser[]= $l;
+			$l->setUserTo($this);
 		}
 	}
 
@@ -1567,6 +1810,7 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	{
 		$this->id = null;
 		$this->username = null;
+		$this->pandora_username = null;
 		$this->real_name = null;
 		$this->email = null;
 		$this->balance = null;
@@ -1592,6 +1836,9 @@ abstract class BaseUser extends BaseObject  implements Persistent
 	public function clearAllReferences($deep = false)
 	{
 		if ($deep) {
+			if ($this->singleBalanceLog) {
+				$this->singleBalanceLog->clearAllReferences($deep);
+			}
 			if ($this->collStocks) {
 				foreach ((array) $this->collStocks as $o) {
 					$o->clearAllReferences($deep);
@@ -1602,22 +1849,29 @@ abstract class BaseUser extends BaseObject  implements Persistent
 					$o->clearAllReferences($deep);
 				}
 			}
-			if ($this->collTransfersRelatedByFrom) {
-				foreach ((array) $this->collTransfersRelatedByFrom as $o) {
+			if ($this->collDeposits) {
+				foreach ((array) $this->collDeposits as $o) {
 					$o->clearAllReferences($deep);
 				}
 			}
-			if ($this->collTransfersRelatedByTo) {
-				foreach ((array) $this->collTransfersRelatedByTo as $o) {
+			if ($this->collTransfersRelatedByFromUser) {
+				foreach ((array) $this->collTransfersRelatedByFromUser as $o) {
+					$o->clearAllReferences($deep);
+				}
+			}
+			if ($this->collTransfersRelatedByToUser) {
+				foreach ((array) $this->collTransfersRelatedByToUser as $o) {
 					$o->clearAllReferences($deep);
 				}
 			}
 		} // if ($deep)
 
+		$this->singleBalanceLog = null;
 		$this->collStocks = null;
 		$this->collPurchases = null;
-		$this->collTransfersRelatedByFrom = null;
-		$this->collTransfersRelatedByTo = null;
+		$this->collDeposits = null;
+		$this->collTransfersRelatedByFromUser = null;
+		$this->collTransfersRelatedByToUser = null;
 	}
 
 	/**

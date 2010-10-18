@@ -43,6 +43,23 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	protected $amount;
 
 	/**
+	 * The value for the created field.
+	 * Note: this column has a database default value of: (expression) current_timestamp
+	 * @var        string
+	 */
+	protected $created;
+
+	/**
+	 * @var        User
+	 */
+	protected $aUser;
+
+	/**
+	 * @var        array BalanceLog[] Collection to store aggregation of BalanceLog objects.
+	 */
+	protected $collBalanceLogs;
+
+	/**
 	 * Flag to prevent endless save loop, if this object is referenced
 	 * by another object which falls in this transaction.
 	 * @var        boolean
@@ -55,6 +72,26 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	 * @var        boolean
 	 */
 	protected $alreadyInValidation = false;
+
+	/**
+	 * Applies default values to this object.
+	 * This method should be called from the object's constructor (or
+	 * equivalent initialization method).
+	 * @see        __construct()
+	 */
+	public function applyDefaultValues()
+	{
+	}
+
+	/**
+	 * Initializes internal state of BaseDeposit object.
+	 * @see        applyDefaults()
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->applyDefaultValues();
+	}
 
 	/**
 	 * Get the [id] column value.
@@ -84,6 +121,39 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	public function getAmount()
 	{
 		return $this->amount;
+	}
+
+	/**
+	 * Get the [optionally formatted] temporal [created] column value.
+	 * 
+	 *
+	 * @param      string $format The date/time format string (either date()-style or strftime()-style).
+	 *							If format is NULL, then the raw DateTime object will be returned.
+	 * @return     mixed Formatted date/time value as string or DateTime object (if format is NULL), NULL if column is NULL
+	 * @throws     PropelException - if unable to parse/validate the date/time value.
+	 */
+	public function getCreated($format = 'Y-m-d H:i:s')
+	{
+		if ($this->created === null) {
+			return null;
+		}
+
+
+
+		try {
+			$dt = new DateTime($this->created);
+		} catch (Exception $x) {
+			throw new PropelException("Internally stored date/time/timestamp value could not be converted to DateTime: " . var_export($this->created, true), $x);
+		}
+
+		if ($format === null) {
+			// Because propel.useDateTimeClass is TRUE, we return a DateTime object.
+			return $dt;
+		} elseif (strpos($format, '%') !== false) {
+			return strftime($format, $dt->format('U'));
+		} else {
+			return $dt->format($format);
+		}
 	}
 
 	/**
@@ -123,6 +193,10 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 			$this->modifiedColumns[] = DepositPeer::USER_ID;
 		}
 
+		if ($this->aUser !== null && $this->aUser->getId() !== $v) {
+			$this->aUser = null;
+		}
+
 		return $this;
 	} // setUserId()
 
@@ -145,6 +219,55 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 
 		return $this;
 	} // setAmount()
+
+	/**
+	 * Sets the value of [created] column to a normalized version of the date/time value specified.
+	 * 
+	 * @param      mixed $v string, integer (timestamp), or DateTime value.  Empty string will
+	 *						be treated as NULL for temporal objects.
+	 * @return     Deposit The current object (for fluent API support)
+	 */
+	public function setCreated($v)
+	{
+		// we treat '' as NULL for temporal objects because DateTime('') == DateTime('now')
+		// -- which is unexpected, to say the least.
+		if ($v === null || $v === '') {
+			$dt = null;
+		} elseif ($v instanceof DateTime) {
+			$dt = $v;
+		} else {
+			// some string/numeric value passed; we normalize that so that we can
+			// validate it.
+			try {
+				if (is_numeric($v)) { // if it's a unix timestamp
+					$dt = new DateTime('@'.$v, new DateTimeZone('UTC'));
+					// We have to explicitly specify and then change the time zone because of a
+					// DateTime bug: http://bugs.php.net/bug.php?id=43003
+					$dt->setTimeZone(new DateTimeZone(date_default_timezone_get()));
+				} else {
+					$dt = new DateTime($v);
+				}
+			} catch (Exception $x) {
+				throw new PropelException('Error parsing date/time value: ' . var_export($v, true), $x);
+			}
+		}
+
+		if ( $this->created !== null || $dt !== null ) {
+			// (nested ifs are a little easier to read in this case)
+
+			$currNorm = ($this->created !== null && $tmpDt = new DateTime($this->created)) ? $tmpDt->format('Y-m-d\\TH:i:sO') : null;
+			$newNorm = ($dt !== null) ? $dt->format('Y-m-d\\TH:i:sO') : null;
+
+			if ( ($currNorm !== $newNorm) // normalized values don't match 
+					)
+			{
+				$this->created = ($dt ? $dt->format('Y-m-d\\TH:i:sO') : null);
+				$this->modifiedColumns[] = DepositPeer::CREATED;
+			}
+		} // if either are not null
+
+		return $this;
+	} // setCreated()
 
 	/**
 	 * Indicates whether the columns in this object are only set to default values.
@@ -181,6 +304,7 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 			$this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
 			$this->user_id = ($row[$startcol + 1] !== null) ? (int) $row[$startcol + 1] : null;
 			$this->amount = ($row[$startcol + 2] !== null) ? (double) $row[$startcol + 2] : null;
+			$this->created = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
 			$this->resetModified();
 
 			$this->setNew(false);
@@ -189,7 +313,7 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 				$this->ensureConsistency();
 			}
 
-			return $startcol + 3; // 3 = DepositPeer::NUM_COLUMNS - DepositPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 4; // 4 = DepositPeer::NUM_COLUMNS - DepositPeer::NUM_LAZY_LOAD_COLUMNS).
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating Deposit object", $e);
@@ -212,6 +336,9 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	public function ensureConsistency()
 	{
 
+		if ($this->aUser !== null && $this->user_id !== $this->aUser->getId()) {
+			$this->aUser = null;
+		}
 	} // ensureConsistency
 
 	/**
@@ -250,6 +377,8 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 		$this->hydrate($row, 0, true); // rehydrate
 
 		if ($deep) {  // also de-associate any related objects?
+			$this->aUser = null;
+			$this->collBalanceLogs = null;
 		} // if (deep)
 	}
 
@@ -360,6 +489,18 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 		if (!$this->alreadyInSave) {
 			$this->alreadyInSave = true;
 
+			// We call the save method on the following object(s) if they
+			// were passed to this object by their coresponding set
+			// method.  This object relates to these object(s) by a
+			// foreign key reference.
+
+			if ($this->aUser !== null) {
+				if ($this->aUser->isModified() || $this->aUser->isNew()) {
+					$affectedRows += $this->aUser->save($con);
+				}
+				$this->setUser($this->aUser);
+			}
+
 			if ($this->isNew() ) {
 				$this->modifiedColumns[] = DepositPeer::ID;
 			}
@@ -373,14 +514,22 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 					}
 
 					$pk = BasePeer::doInsert($criteria, $con);
-					$affectedRows = 1;
+					$affectedRows += 1;
 					$this->setId($pk);  //[IMV] update autoincrement primary key
 					$this->setNew(false);
 				} else {
-					$affectedRows = DepositPeer::doUpdate($this, $con);
+					$affectedRows += DepositPeer::doUpdate($this, $con);
 				}
 
 				$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
+			}
+
+			if ($this->collBalanceLogs !== null) {
+				foreach ($this->collBalanceLogs as $referrerFK) {
+					if (!$referrerFK->isDeleted()) {
+						$affectedRows += $referrerFK->save($con);
+					}
+				}
 			}
 
 			$this->alreadyInSave = false;
@@ -449,10 +598,30 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 			$failureMap = array();
 
 
+			// We call the validate method on the following object(s) if they
+			// were passed to this object by their coresponding set
+			// method.  This object relates to these object(s) by a
+			// foreign key reference.
+
+			if ($this->aUser !== null) {
+				if (!$this->aUser->validate($columns)) {
+					$failureMap = array_merge($failureMap, $this->aUser->getValidationFailures());
+				}
+			}
+
+
 			if (($retval = DepositPeer::doValidate($this, $columns)) !== true) {
 				$failureMap = array_merge($failureMap, $retval);
 			}
 
+
+				if ($this->collBalanceLogs !== null) {
+					foreach ($this->collBalanceLogs as $referrerFK) {
+						if (!$referrerFK->validate($columns)) {
+							$failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
+						}
+					}
+				}
 
 
 			$this->alreadyInValidation = false;
@@ -496,6 +665,9 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 			case 2:
 				return $this->getAmount();
 				break;
+			case 3:
+				return $this->getCreated();
+				break;
 			default:
 				return null;
 				break;
@@ -512,17 +684,24 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	 *                    BasePeer::TYPE_COLNAME, BasePeer::TYPE_FIELDNAME, BasePeer::TYPE_NUM.
 	 *                    Defaults to BasePeer::TYPE_PHPNAME.
 	 * @param     boolean $includeLazyLoadColumns (optional) Whether to include lazy loaded columns. Defaults to TRUE.
+	 * @param     boolean $includeForeignObjects (optional) Whether to include hydrated related objects. Default to FALSE.
 	 *
 	 * @return    array an associative array containing the field names (as keys) and field values
 	 */
-	public function toArray($keyType = BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns = true)
+	public function toArray($keyType = BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns = true, $includeForeignObjects = false)
 	{
 		$keys = DepositPeer::getFieldNames($keyType);
 		$result = array(
 			$keys[0] => $this->getId(),
 			$keys[1] => $this->getUserId(),
 			$keys[2] => $this->getAmount(),
+			$keys[3] => $this->getCreated(),
 		);
+		if ($includeForeignObjects) {
+			if (null !== $this->aUser) {
+				$result['User'] = $this->aUser->toArray($keyType, $includeLazyLoadColumns, true);
+			}
+		}
 		return $result;
 	}
 
@@ -562,6 +741,9 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 			case 2:
 				$this->setAmount($value);
 				break;
+			case 3:
+				$this->setCreated($value);
+				break;
 		} // switch()
 	}
 
@@ -589,6 +771,7 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 		if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
 		if (array_key_exists($keys[1], $arr)) $this->setUserId($arr[$keys[1]]);
 		if (array_key_exists($keys[2], $arr)) $this->setAmount($arr[$keys[2]]);
+		if (array_key_exists($keys[3], $arr)) $this->setCreated($arr[$keys[3]]);
 	}
 
 	/**
@@ -603,6 +786,7 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 		if ($this->isColumnModified(DepositPeer::ID)) $criteria->add(DepositPeer::ID, $this->id);
 		if ($this->isColumnModified(DepositPeer::USER_ID)) $criteria->add(DepositPeer::USER_ID, $this->user_id);
 		if ($this->isColumnModified(DepositPeer::AMOUNT)) $criteria->add(DepositPeer::AMOUNT, $this->amount);
+		if ($this->isColumnModified(DepositPeer::CREATED)) $criteria->add(DepositPeer::CREATED, $this->created);
 
 		return $criteria;
 	}
@@ -666,6 +850,21 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	{
 		$copyObj->setUserId($this->user_id);
 		$copyObj->setAmount($this->amount);
+		$copyObj->setCreated($this->created);
+
+		if ($deepCopy) {
+			// important: temporarily setNew(false) because this affects the behavior of
+			// the getter/setter methods for fkey referrer objects.
+			$copyObj->setNew(false);
+
+			foreach ($this->getBalanceLogs() as $relObj) {
+				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+					$copyObj->addBalanceLog($relObj->copy($deepCopy));
+				}
+			}
+
+		} // if ($deepCopy)
+
 
 		$copyObj->setNew(true);
 		$copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -710,6 +909,264 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	}
 
 	/**
+	 * Declares an association between this object and a User object.
+	 *
+	 * @param      User $v
+	 * @return     Deposit The current object (for fluent API support)
+	 * @throws     PropelException
+	 */
+	public function setUser(User $v = null)
+	{
+		if ($v === null) {
+			$this->setUserId(NULL);
+		} else {
+			$this->setUserId($v->getId());
+		}
+
+		$this->aUser = $v;
+
+		// Add binding for other direction of this n:n relationship.
+		// If this object has already been added to the User object, it will not be re-added.
+		if ($v !== null) {
+			$v->addDeposit($this);
+		}
+
+		return $this;
+	}
+
+
+	/**
+	 * Get the associated User object
+	 *
+	 * @param      PropelPDO Optional Connection object.
+	 * @return     User The associated User object.
+	 * @throws     PropelException
+	 */
+	public function getUser(PropelPDO $con = null)
+	{
+		if ($this->aUser === null && ($this->user_id !== null)) {
+			$this->aUser = UserQuery::create()->findPk($this->user_id, $con);
+			/* The following can be used additionally to
+				 guarantee the related object contains a reference
+				 to this object.  This level of coupling may, however, be
+				 undesirable since it could result in an only partially populated collection
+				 in the referenced object.
+				 $this->aUser->addDeposits($this);
+			 */
+		}
+		return $this->aUser;
+	}
+
+	/**
+	 * Clears out the collBalanceLogs collection
+	 *
+	 * This does not modify the database; however, it will remove any associated objects, causing
+	 * them to be refetched by subsequent calls to accessor method.
+	 *
+	 * @return     void
+	 * @see        addBalanceLogs()
+	 */
+	public function clearBalanceLogs()
+	{
+		$this->collBalanceLogs = null; // important to set this to NULL since that means it is uninitialized
+	}
+
+	/**
+	 * Initializes the collBalanceLogs collection.
+	 *
+	 * By default this just sets the collBalanceLogs collection to an empty array (like clearcollBalanceLogs());
+	 * however, you may wish to override this method in your stub class to provide setting appropriate
+	 * to your application -- for example, setting the initial array to the values stored in database.
+	 *
+	 * @return     void
+	 */
+	public function initBalanceLogs()
+	{
+		$this->collBalanceLogs = new PropelObjectCollection();
+		$this->collBalanceLogs->setModel('BalanceLog');
+	}
+
+	/**
+	 * Gets an array of BalanceLog objects which contain a foreign key that references this object.
+	 *
+	 * If the $criteria is not null, it is used to always fetch the results from the database.
+	 * Otherwise the results are fetched from the database the first time, then cached.
+	 * Next time the same method is called without $criteria, the cached collection is returned.
+	 * If this Deposit is new, it will return
+	 * an empty collection or the current collection; the criteria is ignored on a new object.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 * @throws     PropelException
+	 */
+	public function getBalanceLogs($criteria = null, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogs || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogs) {
+				// return empty collection
+				$this->initBalanceLogs();
+			} else {
+				$collBalanceLogs = BalanceLogQuery::create(null, $criteria)
+					->filterByDeposit($this)
+					->find($con);
+				if (null !== $criteria) {
+					return $collBalanceLogs;
+				}
+				$this->collBalanceLogs = $collBalanceLogs;
+			}
+		}
+		return $this->collBalanceLogs;
+	}
+
+	/**
+	 * Returns the number of related BalanceLog objects.
+	 *
+	 * @param      Criteria $criteria
+	 * @param      boolean $distinct
+	 * @param      PropelPDO $con
+	 * @return     int Count of related BalanceLog objects.
+	 * @throws     PropelException
+	 */
+	public function countBalanceLogs(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+	{
+		if(null === $this->collBalanceLogs || null !== $criteria) {
+			if ($this->isNew() && null === $this->collBalanceLogs) {
+				return 0;
+			} else {
+				$query = BalanceLogQuery::create(null, $criteria);
+				if($distinct) {
+					$query->distinct();
+				}
+				return $query
+					->filterByDeposit($this)
+					->count($con);
+			}
+		} else {
+			return count($this->collBalanceLogs);
+		}
+	}
+
+	/**
+	 * Method called to associate a BalanceLog object to this object
+	 * through the BalanceLog foreign key attribute.
+	 *
+	 * @param      BalanceLog $l BalanceLog
+	 * @return     void
+	 * @throws     PropelException
+	 */
+	public function addBalanceLog(BalanceLog $l)
+	{
+		if ($this->collBalanceLogs === null) {
+			$this->initBalanceLogs();
+		}
+		if (!$this->collBalanceLogs->contains($l)) { // only add it if the **same** object is not already associated
+			$this->collBalanceLogs[]= $l;
+			$l->setDeposit($this);
+		}
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Deposit is new, it will return
+	 * an empty collection; or if this Deposit has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Deposit.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinUser($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('User', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Deposit is new, it will return
+	 * an empty collection; or if this Deposit has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Deposit.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinPurchase($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Purchase', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Deposit is new, it will return
+	 * an empty collection; or if this Deposit has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Deposit.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinSale($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Sale', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+
+	/**
+	 * If this collection has already been initialized with
+	 * an identical criteria, it returns the collection.
+	 * Otherwise if this Deposit is new, it will return
+	 * an empty collection; or if this Deposit has previously
+	 * been saved, it will retrieve related BalanceLogs from storage.
+	 *
+	 * This method is protected by default in order to keep the public
+	 * api reasonable.  You can provide public methods for those you
+	 * actually need in Deposit.
+	 *
+	 * @param      Criteria $criteria optional Criteria object to narrow the query
+	 * @param      PropelPDO $con optional connection object
+	 * @param      string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+	 * @return     PropelCollection|array BalanceLog[] List of BalanceLog objects
+	 */
+	public function getBalanceLogsJoinTransfer($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+	{
+		$query = BalanceLogQuery::create(null, $criteria);
+		$query->joinWith('Transfer', $join_behavior);
+
+		return $this->getBalanceLogs($query, $con);
+	}
+
+	/**
 	 * Clears the current object and sets all attributes to their default values
 	 */
 	public function clear()
@@ -717,9 +1174,11 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 		$this->id = null;
 		$this->user_id = null;
 		$this->amount = null;
+		$this->created = null;
 		$this->alreadyInSave = false;
 		$this->alreadyInValidation = false;
 		$this->clearAllReferences();
+		$this->applyDefaultValues();
 		$this->resetModified();
 		$this->setNew(true);
 		$this->setDeleted(false);
@@ -737,8 +1196,15 @@ abstract class BaseDeposit extends BaseObject  implements Persistent
 	public function clearAllReferences($deep = false)
 	{
 		if ($deep) {
+			if ($this->collBalanceLogs) {
+				foreach ((array) $this->collBalanceLogs as $o) {
+					$o->clearAllReferences($deep);
+				}
+			}
 		} // if ($deep)
 
+		$this->collBalanceLogs = null;
+		$this->aUser = null;
 	}
 
 	/**

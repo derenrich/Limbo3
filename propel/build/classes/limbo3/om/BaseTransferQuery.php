@@ -7,15 +7,15 @@
  * 
  *
  * @method     TransferQuery orderById($order = Criteria::ASC) Order by the id column
- * @method     TransferQuery orderByFrom($order = Criteria::ASC) Order by the from column
- * @method     TransferQuery orderByTo($order = Criteria::ASC) Order by the to column
+ * @method     TransferQuery orderByFromUser($order = Criteria::ASC) Order by the from_user column
+ * @method     TransferQuery orderByToUser($order = Criteria::ASC) Order by the to_user column
  * @method     TransferQuery orderByAmount($order = Criteria::ASC) Order by the amount column
  * @method     TransferQuery orderByReason($order = Criteria::ASC) Order by the reason column
  * @method     TransferQuery orderByCreated($order = Criteria::ASC) Order by the created column
  *
  * @method     TransferQuery groupById() Group by the id column
- * @method     TransferQuery groupByFrom() Group by the from column
- * @method     TransferQuery groupByTo() Group by the to column
+ * @method     TransferQuery groupByFromUser() Group by the from_user column
+ * @method     TransferQuery groupByToUser() Group by the to_user column
  * @method     TransferQuery groupByAmount() Group by the amount column
  * @method     TransferQuery groupByReason() Group by the reason column
  * @method     TransferQuery groupByCreated() Group by the created column
@@ -24,27 +24,31 @@
  * @method     TransferQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method     TransferQuery innerJoin($relation) Adds a INNER JOIN clause to the query
  *
- * @method     TransferQuery leftJoinUserRelatedByFrom($relationAlias = null) Adds a LEFT JOIN clause to the query using the UserRelatedByFrom relation
- * @method     TransferQuery rightJoinUserRelatedByFrom($relationAlias = null) Adds a RIGHT JOIN clause to the query using the UserRelatedByFrom relation
- * @method     TransferQuery innerJoinUserRelatedByFrom($relationAlias = null) Adds a INNER JOIN clause to the query using the UserRelatedByFrom relation
+ * @method     TransferQuery leftJoinUserFrom($relationAlias = null) Adds a LEFT JOIN clause to the query using the UserFrom relation
+ * @method     TransferQuery rightJoinUserFrom($relationAlias = null) Adds a RIGHT JOIN clause to the query using the UserFrom relation
+ * @method     TransferQuery innerJoinUserFrom($relationAlias = null) Adds a INNER JOIN clause to the query using the UserFrom relation
  *
- * @method     TransferQuery leftJoinUserRelatedByTo($relationAlias = null) Adds a LEFT JOIN clause to the query using the UserRelatedByTo relation
- * @method     TransferQuery rightJoinUserRelatedByTo($relationAlias = null) Adds a RIGHT JOIN clause to the query using the UserRelatedByTo relation
- * @method     TransferQuery innerJoinUserRelatedByTo($relationAlias = null) Adds a INNER JOIN clause to the query using the UserRelatedByTo relation
+ * @method     TransferQuery leftJoinUserTo($relationAlias = null) Adds a LEFT JOIN clause to the query using the UserTo relation
+ * @method     TransferQuery rightJoinUserTo($relationAlias = null) Adds a RIGHT JOIN clause to the query using the UserTo relation
+ * @method     TransferQuery innerJoinUserTo($relationAlias = null) Adds a INNER JOIN clause to the query using the UserTo relation
+ *
+ * @method     TransferQuery leftJoinBalanceLog($relationAlias = null) Adds a LEFT JOIN clause to the query using the BalanceLog relation
+ * @method     TransferQuery rightJoinBalanceLog($relationAlias = null) Adds a RIGHT JOIN clause to the query using the BalanceLog relation
+ * @method     TransferQuery innerJoinBalanceLog($relationAlias = null) Adds a INNER JOIN clause to the query using the BalanceLog relation
  *
  * @method     Transfer findOne(PropelPDO $con = null) Return the first Transfer matching the query
  * @method     Transfer findOneOrCreate(PropelPDO $con = null) Return the first Transfer matching the query, or a new Transfer object populated from the query conditions when no match is found
  *
  * @method     Transfer findOneById(int $id) Return the first Transfer filtered by the id column
- * @method     Transfer findOneByFrom(int $from) Return the first Transfer filtered by the from column
- * @method     Transfer findOneByTo(int $to) Return the first Transfer filtered by the to column
+ * @method     Transfer findOneByFromUser(int $from_user) Return the first Transfer filtered by the from_user column
+ * @method     Transfer findOneByToUser(int $to_user) Return the first Transfer filtered by the to_user column
  * @method     Transfer findOneByAmount(double $amount) Return the first Transfer filtered by the amount column
  * @method     Transfer findOneByReason(string $reason) Return the first Transfer filtered by the reason column
  * @method     Transfer findOneByCreated(string $created) Return the first Transfer filtered by the created column
  *
  * @method     array findById(int $id) Return Transfer objects filtered by the id column
- * @method     array findByFrom(int $from) Return Transfer objects filtered by the from column
- * @method     array findByTo(int $to) Return Transfer objects filtered by the to column
+ * @method     array findByFromUser(int $from_user) Return Transfer objects filtered by the from_user column
+ * @method     array findByToUser(int $to_user) Return Transfer objects filtered by the to_user column
  * @method     array findByAmount(double $amount) Return Transfer objects filtered by the amount column
  * @method     array findByReason(string $reason) Return Transfer objects filtered by the reason column
  * @method     array findByCreated(string $created) Return Transfer objects filtered by the created column
@@ -175,24 +179,24 @@ abstract class BaseTransferQuery extends ModelCriteria
 	}
 
 	/**
-	 * Filter the query on the from column
+	 * Filter the query on the from_user column
 	 * 
-	 * @param     int|array $from The value to use as filter.
+	 * @param     int|array $fromUser The value to use as filter.
 	 *            Accepts an associative array('min' => $minValue, 'max' => $maxValue)
 	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
 	 *
 	 * @return    TransferQuery The current query, for fluid interface
 	 */
-	public function filterByFrom($from = null, $comparison = null)
+	public function filterByFromUser($fromUser = null, $comparison = null)
 	{
-		if (is_array($from)) {
+		if (is_array($fromUser)) {
 			$useMinMax = false;
-			if (isset($from['min'])) {
-				$this->addUsingAlias(TransferPeer::FROM, $from['min'], Criteria::GREATER_EQUAL);
+			if (isset($fromUser['min'])) {
+				$this->addUsingAlias(TransferPeer::FROM_USER, $fromUser['min'], Criteria::GREATER_EQUAL);
 				$useMinMax = true;
 			}
-			if (isset($from['max'])) {
-				$this->addUsingAlias(TransferPeer::FROM, $from['max'], Criteria::LESS_EQUAL);
+			if (isset($fromUser['max'])) {
+				$this->addUsingAlias(TransferPeer::FROM_USER, $fromUser['max'], Criteria::LESS_EQUAL);
 				$useMinMax = true;
 			}
 			if ($useMinMax) {
@@ -202,28 +206,28 @@ abstract class BaseTransferQuery extends ModelCriteria
 				$comparison = Criteria::IN;
 			}
 		}
-		return $this->addUsingAlias(TransferPeer::FROM, $from, $comparison);
+		return $this->addUsingAlias(TransferPeer::FROM_USER, $fromUser, $comparison);
 	}
 
 	/**
-	 * Filter the query on the to column
+	 * Filter the query on the to_user column
 	 * 
-	 * @param     int|array $to The value to use as filter.
+	 * @param     int|array $toUser The value to use as filter.
 	 *            Accepts an associative array('min' => $minValue, 'max' => $maxValue)
 	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
 	 *
 	 * @return    TransferQuery The current query, for fluid interface
 	 */
-	public function filterByTo($to = null, $comparison = null)
+	public function filterByToUser($toUser = null, $comparison = null)
 	{
-		if (is_array($to)) {
+		if (is_array($toUser)) {
 			$useMinMax = false;
-			if (isset($to['min'])) {
-				$this->addUsingAlias(TransferPeer::TO, $to['min'], Criteria::GREATER_EQUAL);
+			if (isset($toUser['min'])) {
+				$this->addUsingAlias(TransferPeer::TO_USER, $toUser['min'], Criteria::GREATER_EQUAL);
 				$useMinMax = true;
 			}
-			if (isset($to['max'])) {
-				$this->addUsingAlias(TransferPeer::TO, $to['max'], Criteria::LESS_EQUAL);
+			if (isset($toUser['max'])) {
+				$this->addUsingAlias(TransferPeer::TO_USER, $toUser['max'], Criteria::LESS_EQUAL);
 				$useMinMax = true;
 			}
 			if ($useMinMax) {
@@ -233,7 +237,7 @@ abstract class BaseTransferQuery extends ModelCriteria
 				$comparison = Criteria::IN;
 			}
 		}
-		return $this->addUsingAlias(TransferPeer::TO, $to, $comparison);
+		return $this->addUsingAlias(TransferPeer::TO_USER, $toUser, $comparison);
 	}
 
 	/**
@@ -328,24 +332,24 @@ abstract class BaseTransferQuery extends ModelCriteria
 	 *
 	 * @return    TransferQuery The current query, for fluid interface
 	 */
-	public function filterByUserRelatedByFrom($user, $comparison = null)
+	public function filterByUserFrom($user, $comparison = null)
 	{
 		return $this
-			->addUsingAlias(TransferPeer::FROM, $user->getId(), $comparison);
+			->addUsingAlias(TransferPeer::FROM_USER, $user->getId(), $comparison);
 	}
 
 	/**
-	 * Adds a JOIN clause to the query using the UserRelatedByFrom relation
+	 * Adds a JOIN clause to the query using the UserFrom relation
 	 * 
 	 * @param     string $relationAlias optional alias for the relation
 	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
 	 *
 	 * @return    TransferQuery The current query, for fluid interface
 	 */
-	public function joinUserRelatedByFrom($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function joinUserFrom($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		$tableMap = $this->getTableMap();
-		$relationMap = $tableMap->getRelation('UserRelatedByFrom');
+		$relationMap = $tableMap->getRelation('UserFrom');
 		
 		// create a ModelJoin object for this join
 		$join = new ModelJoin();
@@ -360,14 +364,14 @@ abstract class BaseTransferQuery extends ModelCriteria
 			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
 			$this->addJoinObject($join, $relationAlias);
 		} else {
-			$this->addJoinObject($join, 'UserRelatedByFrom');
+			$this->addJoinObject($join, 'UserFrom');
 		}
 		
 		return $this;
 	}
 
 	/**
-	 * Use the UserRelatedByFrom relation User object
+	 * Use the UserFrom relation User object
 	 *
 	 * @see       useQuery()
 	 * 
@@ -377,11 +381,11 @@ abstract class BaseTransferQuery extends ModelCriteria
 	 *
 	 * @return    UserQuery A secondary query class using the current class as primary query
 	 */
-	public function useUserRelatedByFromQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function useUserFromQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		return $this
-			->joinUserRelatedByFrom($relationAlias, $joinType)
-			->useQuery($relationAlias ? $relationAlias : 'UserRelatedByFrom', 'UserQuery');
+			->joinUserFrom($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'UserFrom', 'UserQuery');
 	}
 
 	/**
@@ -392,24 +396,24 @@ abstract class BaseTransferQuery extends ModelCriteria
 	 *
 	 * @return    TransferQuery The current query, for fluid interface
 	 */
-	public function filterByUserRelatedByTo($user, $comparison = null)
+	public function filterByUserTo($user, $comparison = null)
 	{
 		return $this
-			->addUsingAlias(TransferPeer::TO, $user->getId(), $comparison);
+			->addUsingAlias(TransferPeer::TO_USER, $user->getId(), $comparison);
 	}
 
 	/**
-	 * Adds a JOIN clause to the query using the UserRelatedByTo relation
+	 * Adds a JOIN clause to the query using the UserTo relation
 	 * 
 	 * @param     string $relationAlias optional alias for the relation
 	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
 	 *
 	 * @return    TransferQuery The current query, for fluid interface
 	 */
-	public function joinUserRelatedByTo($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function joinUserTo($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		$tableMap = $this->getTableMap();
-		$relationMap = $tableMap->getRelation('UserRelatedByTo');
+		$relationMap = $tableMap->getRelation('UserTo');
 		
 		// create a ModelJoin object for this join
 		$join = new ModelJoin();
@@ -424,14 +428,14 @@ abstract class BaseTransferQuery extends ModelCriteria
 			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
 			$this->addJoinObject($join, $relationAlias);
 		} else {
-			$this->addJoinObject($join, 'UserRelatedByTo');
+			$this->addJoinObject($join, 'UserTo');
 		}
 		
 		return $this;
 	}
 
 	/**
-	 * Use the UserRelatedByTo relation User object
+	 * Use the UserTo relation User object
 	 *
 	 * @see       useQuery()
 	 * 
@@ -441,11 +445,75 @@ abstract class BaseTransferQuery extends ModelCriteria
 	 *
 	 * @return    UserQuery A secondary query class using the current class as primary query
 	 */
-	public function useUserRelatedByToQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function useUserToQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		return $this
-			->joinUserRelatedByTo($relationAlias, $joinType)
-			->useQuery($relationAlias ? $relationAlias : 'UserRelatedByTo', 'UserQuery');
+			->joinUserTo($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'UserTo', 'UserQuery');
+	}
+
+	/**
+	 * Filter the query by a related BalanceLog object
+	 *
+	 * @param     BalanceLog $balanceLog  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    TransferQuery The current query, for fluid interface
+	 */
+	public function filterByBalanceLog($balanceLog, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(TransferPeer::ID, $balanceLog->getTransferId(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the BalanceLog relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    TransferQuery The current query, for fluid interface
+	 */
+	public function joinBalanceLog($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('BalanceLog');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'BalanceLog');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the BalanceLog relation BalanceLog object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    BalanceLogQuery A secondary query class using the current class as primary query
+	 */
+	public function useBalanceLogQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		return $this
+			->joinBalanceLog($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'BalanceLog', 'BalanceLogQuery');
 	}
 
 	/**

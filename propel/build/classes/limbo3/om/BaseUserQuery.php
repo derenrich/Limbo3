@@ -8,6 +8,7 @@
  *
  * @method     UserQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     UserQuery orderByUsername($order = Criteria::ASC) Order by the username column
+ * @method     UserQuery orderByPandoraUsername($order = Criteria::ASC) Order by the pandora_username column
  * @method     UserQuery orderByRealName($order = Criteria::ASC) Order by the real_name column
  * @method     UserQuery orderByEmail($order = Criteria::ASC) Order by the email column
  * @method     UserQuery orderByBalance($order = Criteria::ASC) Order by the balance column
@@ -15,6 +16,7 @@
  *
  * @method     UserQuery groupById() Group by the id column
  * @method     UserQuery groupByUsername() Group by the username column
+ * @method     UserQuery groupByPandoraUsername() Group by the pandora_username column
  * @method     UserQuery groupByRealName() Group by the real_name column
  * @method     UserQuery groupByEmail() Group by the email column
  * @method     UserQuery groupByBalance() Group by the balance column
@@ -24,6 +26,10 @@
  * @method     UserQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method     UserQuery innerJoin($relation) Adds a INNER JOIN clause to the query
  *
+ * @method     UserQuery leftJoinBalanceLog($relationAlias = null) Adds a LEFT JOIN clause to the query using the BalanceLog relation
+ * @method     UserQuery rightJoinBalanceLog($relationAlias = null) Adds a RIGHT JOIN clause to the query using the BalanceLog relation
+ * @method     UserQuery innerJoinBalanceLog($relationAlias = null) Adds a INNER JOIN clause to the query using the BalanceLog relation
+ *
  * @method     UserQuery leftJoinStock($relationAlias = null) Adds a LEFT JOIN clause to the query using the Stock relation
  * @method     UserQuery rightJoinStock($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Stock relation
  * @method     UserQuery innerJoinStock($relationAlias = null) Adds a INNER JOIN clause to the query using the Stock relation
@@ -32,19 +38,24 @@
  * @method     UserQuery rightJoinPurchase($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Purchase relation
  * @method     UserQuery innerJoinPurchase($relationAlias = null) Adds a INNER JOIN clause to the query using the Purchase relation
  *
- * @method     UserQuery leftJoinTransferRelatedByFrom($relationAlias = null) Adds a LEFT JOIN clause to the query using the TransferRelatedByFrom relation
- * @method     UserQuery rightJoinTransferRelatedByFrom($relationAlias = null) Adds a RIGHT JOIN clause to the query using the TransferRelatedByFrom relation
- * @method     UserQuery innerJoinTransferRelatedByFrom($relationAlias = null) Adds a INNER JOIN clause to the query using the TransferRelatedByFrom relation
+ * @method     UserQuery leftJoinDeposit($relationAlias = null) Adds a LEFT JOIN clause to the query using the Deposit relation
+ * @method     UserQuery rightJoinDeposit($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Deposit relation
+ * @method     UserQuery innerJoinDeposit($relationAlias = null) Adds a INNER JOIN clause to the query using the Deposit relation
  *
- * @method     UserQuery leftJoinTransferRelatedByTo($relationAlias = null) Adds a LEFT JOIN clause to the query using the TransferRelatedByTo relation
- * @method     UserQuery rightJoinTransferRelatedByTo($relationAlias = null) Adds a RIGHT JOIN clause to the query using the TransferRelatedByTo relation
- * @method     UserQuery innerJoinTransferRelatedByTo($relationAlias = null) Adds a INNER JOIN clause to the query using the TransferRelatedByTo relation
+ * @method     UserQuery leftJoinTransferRelatedByFromUser($relationAlias = null) Adds a LEFT JOIN clause to the query using the TransferRelatedByFromUser relation
+ * @method     UserQuery rightJoinTransferRelatedByFromUser($relationAlias = null) Adds a RIGHT JOIN clause to the query using the TransferRelatedByFromUser relation
+ * @method     UserQuery innerJoinTransferRelatedByFromUser($relationAlias = null) Adds a INNER JOIN clause to the query using the TransferRelatedByFromUser relation
+ *
+ * @method     UserQuery leftJoinTransferRelatedByToUser($relationAlias = null) Adds a LEFT JOIN clause to the query using the TransferRelatedByToUser relation
+ * @method     UserQuery rightJoinTransferRelatedByToUser($relationAlias = null) Adds a RIGHT JOIN clause to the query using the TransferRelatedByToUser relation
+ * @method     UserQuery innerJoinTransferRelatedByToUser($relationAlias = null) Adds a INNER JOIN clause to the query using the TransferRelatedByToUser relation
  *
  * @method     User findOne(PropelPDO $con = null) Return the first User matching the query
  * @method     User findOneOrCreate(PropelPDO $con = null) Return the first User matching the query, or a new User object populated from the query conditions when no match is found
  *
  * @method     User findOneById(int $id) Return the first User filtered by the id column
  * @method     User findOneByUsername(string $username) Return the first User filtered by the username column
+ * @method     User findOneByPandoraUsername(string $pandora_username) Return the first User filtered by the pandora_username column
  * @method     User findOneByRealName(string $real_name) Return the first User filtered by the real_name column
  * @method     User findOneByEmail(string $email) Return the first User filtered by the email column
  * @method     User findOneByBalance(double $balance) Return the first User filtered by the balance column
@@ -52,6 +63,7 @@
  *
  * @method     array findById(int $id) Return User objects filtered by the id column
  * @method     array findByUsername(string $username) Return User objects filtered by the username column
+ * @method     array findByPandoraUsername(string $pandora_username) Return User objects filtered by the pandora_username column
  * @method     array findByRealName(string $real_name) Return User objects filtered by the real_name column
  * @method     array findByEmail(string $email) Return User objects filtered by the email column
  * @method     array findByBalance(double $balance) Return User objects filtered by the balance column
@@ -205,6 +217,28 @@ abstract class BaseUserQuery extends ModelCriteria
 	}
 
 	/**
+	 * Filter the query on the pandora_username column
+	 * 
+	 * @param     string $pandoraUsername The value to use as filter.
+	 *            Accepts wildcards (* and % trigger a LIKE)
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    UserQuery The current query, for fluid interface
+	 */
+	public function filterByPandoraUsername($pandoraUsername = null, $comparison = null)
+	{
+		if (null === $comparison) {
+			if (is_array($pandoraUsername)) {
+				$comparison = Criteria::IN;
+			} elseif (preg_match('/[\%\*]/', $pandoraUsername)) {
+				$pandoraUsername = str_replace('*', '%', $pandoraUsername);
+				$comparison = Criteria::LIKE;
+			}
+		}
+		return $this->addUsingAlias(UserPeer::PANDORA_USERNAME, $pandoraUsername, $comparison);
+	}
+
+	/**
 	 * Filter the query on the real_name column
 	 * 
 	 * @param     string $realName The value to use as filter.
@@ -308,6 +342,70 @@ abstract class BaseUserQuery extends ModelCriteria
 			}
 		}
 		return $this->addUsingAlias(UserPeer::CREATED, $created, $comparison);
+	}
+
+	/**
+	 * Filter the query by a related BalanceLog object
+	 *
+	 * @param     BalanceLog $balanceLog  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    UserQuery The current query, for fluid interface
+	 */
+	public function filterByBalanceLog($balanceLog, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(UserPeer::ID, $balanceLog->getId(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the BalanceLog relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    UserQuery The current query, for fluid interface
+	 */
+	public function joinBalanceLog($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('BalanceLog');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'BalanceLog');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the BalanceLog relation BalanceLog object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    BalanceLogQuery A secondary query class using the current class as primary query
+	 */
+	public function useBalanceLogQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	{
+		return $this
+			->joinBalanceLog($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'BalanceLog', 'BalanceLogQuery');
 	}
 
 	/**
@@ -439,31 +537,31 @@ abstract class BaseUserQuery extends ModelCriteria
 	}
 
 	/**
-	 * Filter the query by a related Transfer object
+	 * Filter the query by a related Deposit object
 	 *
-	 * @param     Transfer $transfer  the related object to use as filter
+	 * @param     Deposit $deposit  the related object to use as filter
 	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
 	 *
 	 * @return    UserQuery The current query, for fluid interface
 	 */
-	public function filterByTransferRelatedByFrom($transfer, $comparison = null)
+	public function filterByDeposit($deposit, $comparison = null)
 	{
 		return $this
-			->addUsingAlias(UserPeer::ID, $transfer->getFrom(), $comparison);
+			->addUsingAlias(UserPeer::ID, $deposit->getUserId(), $comparison);
 	}
 
 	/**
-	 * Adds a JOIN clause to the query using the TransferRelatedByFrom relation
+	 * Adds a JOIN clause to the query using the Deposit relation
 	 * 
 	 * @param     string $relationAlias optional alias for the relation
 	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
 	 *
 	 * @return    UserQuery The current query, for fluid interface
 	 */
-	public function joinTransferRelatedByFrom($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function joinDeposit($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		$tableMap = $this->getTableMap();
-		$relationMap = $tableMap->getRelation('TransferRelatedByFrom');
+		$relationMap = $tableMap->getRelation('Deposit');
 		
 		// create a ModelJoin object for this join
 		$join = new ModelJoin();
@@ -478,14 +576,14 @@ abstract class BaseUserQuery extends ModelCriteria
 			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
 			$this->addJoinObject($join, $relationAlias);
 		} else {
-			$this->addJoinObject($join, 'TransferRelatedByFrom');
+			$this->addJoinObject($join, 'Deposit');
 		}
 		
 		return $this;
 	}
 
 	/**
-	 * Use the TransferRelatedByFrom relation Transfer object
+	 * Use the Deposit relation Deposit object
 	 *
 	 * @see       useQuery()
 	 * 
@@ -493,13 +591,13 @@ abstract class BaseUserQuery extends ModelCriteria
 	 *                                   to be used as main alias in the secondary query
 	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
 	 *
-	 * @return    TransferQuery A secondary query class using the current class as primary query
+	 * @return    DepositQuery A secondary query class using the current class as primary query
 	 */
-	public function useTransferRelatedByFromQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function useDepositQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		return $this
-			->joinTransferRelatedByFrom($relationAlias, $joinType)
-			->useQuery($relationAlias ? $relationAlias : 'TransferRelatedByFrom', 'TransferQuery');
+			->joinDeposit($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'Deposit', 'DepositQuery');
 	}
 
 	/**
@@ -510,24 +608,24 @@ abstract class BaseUserQuery extends ModelCriteria
 	 *
 	 * @return    UserQuery The current query, for fluid interface
 	 */
-	public function filterByTransferRelatedByTo($transfer, $comparison = null)
+	public function filterByTransferRelatedByFromUser($transfer, $comparison = null)
 	{
 		return $this
-			->addUsingAlias(UserPeer::ID, $transfer->getTo(), $comparison);
+			->addUsingAlias(UserPeer::ID, $transfer->getFromUser(), $comparison);
 	}
 
 	/**
-	 * Adds a JOIN clause to the query using the TransferRelatedByTo relation
+	 * Adds a JOIN clause to the query using the TransferRelatedByFromUser relation
 	 * 
 	 * @param     string $relationAlias optional alias for the relation
 	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
 	 *
 	 * @return    UserQuery The current query, for fluid interface
 	 */
-	public function joinTransferRelatedByTo($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function joinTransferRelatedByFromUser($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		$tableMap = $this->getTableMap();
-		$relationMap = $tableMap->getRelation('TransferRelatedByTo');
+		$relationMap = $tableMap->getRelation('TransferRelatedByFromUser');
 		
 		// create a ModelJoin object for this join
 		$join = new ModelJoin();
@@ -542,14 +640,14 @@ abstract class BaseUserQuery extends ModelCriteria
 			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
 			$this->addJoinObject($join, $relationAlias);
 		} else {
-			$this->addJoinObject($join, 'TransferRelatedByTo');
+			$this->addJoinObject($join, 'TransferRelatedByFromUser');
 		}
 		
 		return $this;
 	}
 
 	/**
-	 * Use the TransferRelatedByTo relation Transfer object
+	 * Use the TransferRelatedByFromUser relation Transfer object
 	 *
 	 * @see       useQuery()
 	 * 
@@ -559,11 +657,75 @@ abstract class BaseUserQuery extends ModelCriteria
 	 *
 	 * @return    TransferQuery A secondary query class using the current class as primary query
 	 */
-	public function useTransferRelatedByToQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	public function useTransferRelatedByFromUserQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
 	{
 		return $this
-			->joinTransferRelatedByTo($relationAlias, $joinType)
-			->useQuery($relationAlias ? $relationAlias : 'TransferRelatedByTo', 'TransferQuery');
+			->joinTransferRelatedByFromUser($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'TransferRelatedByFromUser', 'TransferQuery');
+	}
+
+	/**
+	 * Filter the query by a related Transfer object
+	 *
+	 * @param     Transfer $transfer  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    UserQuery The current query, for fluid interface
+	 */
+	public function filterByTransferRelatedByToUser($transfer, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(UserPeer::ID, $transfer->getToUser(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the TransferRelatedByToUser relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    UserQuery The current query, for fluid interface
+	 */
+	public function joinTransferRelatedByToUser($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('TransferRelatedByToUser');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'TransferRelatedByToUser');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the TransferRelatedByToUser relation Transfer object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    TransferQuery A secondary query class using the current class as primary query
+	 */
+	public function useTransferRelatedByToUserQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	{
+		return $this
+			->joinTransferRelatedByToUser($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'TransferRelatedByToUser', 'TransferQuery');
 	}
 
 	/**

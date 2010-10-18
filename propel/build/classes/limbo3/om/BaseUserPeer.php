@@ -26,7 +26,7 @@ abstract class BaseUserPeer {
 	const TM_CLASS = 'UserTableMap';
 	
 	/** The total number of columns. */
-	const NUM_COLUMNS = 6;
+	const NUM_COLUMNS = 7;
 
 	/** The number of lazy-loaded columns. */
 	const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -36,6 +36,9 @@ abstract class BaseUserPeer {
 
 	/** the column name for the USERNAME field */
 	const USERNAME = 'user.USERNAME';
+
+	/** the column name for the PANDORA_USERNAME field */
+	const PANDORA_USERNAME = 'user.PANDORA_USERNAME';
 
 	/** the column name for the REAL_NAME field */
 	const REAL_NAME = 'user.REAL_NAME';
@@ -65,12 +68,12 @@ abstract class BaseUserPeer {
 	 * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
 	 */
 	private static $fieldNames = array (
-		BasePeer::TYPE_PHPNAME => array ('Id', 'Username', 'RealName', 'Email', 'Balance', 'Created', ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'username', 'realName', 'email', 'balance', 'created', ),
-		BasePeer::TYPE_COLNAME => array (self::ID, self::USERNAME, self::REAL_NAME, self::EMAIL, self::BALANCE, self::CREATED, ),
-		BasePeer::TYPE_RAW_COLNAME => array ('ID', 'USERNAME', 'REAL_NAME', 'EMAIL', 'BALANCE', 'CREATED', ),
-		BasePeer::TYPE_FIELDNAME => array ('id', 'username', 'real_name', 'email', 'balance', 'created', ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+		BasePeer::TYPE_PHPNAME => array ('Id', 'Username', 'PandoraUsername', 'RealName', 'Email', 'Balance', 'Created', ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'username', 'pandoraUsername', 'realName', 'email', 'balance', 'created', ),
+		BasePeer::TYPE_COLNAME => array (self::ID, self::USERNAME, self::PANDORA_USERNAME, self::REAL_NAME, self::EMAIL, self::BALANCE, self::CREATED, ),
+		BasePeer::TYPE_RAW_COLNAME => array ('ID', 'USERNAME', 'PANDORA_USERNAME', 'REAL_NAME', 'EMAIL', 'BALANCE', 'CREATED', ),
+		BasePeer::TYPE_FIELDNAME => array ('id', 'username', 'pandora_username', 'real_name', 'email', 'balance', 'created', ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
 	);
 
 	/**
@@ -80,12 +83,12 @@ abstract class BaseUserPeer {
 	 * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
 	 */
 	private static $fieldKeys = array (
-		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'Username' => 1, 'RealName' => 2, 'Email' => 3, 'Balance' => 4, 'Created' => 5, ),
-		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'username' => 1, 'realName' => 2, 'email' => 3, 'balance' => 4, 'created' => 5, ),
-		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::USERNAME => 1, self::REAL_NAME => 2, self::EMAIL => 3, self::BALANCE => 4, self::CREATED => 5, ),
-		BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'USERNAME' => 1, 'REAL_NAME' => 2, 'EMAIL' => 3, 'BALANCE' => 4, 'CREATED' => 5, ),
-		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'username' => 1, 'real_name' => 2, 'email' => 3, 'balance' => 4, 'created' => 5, ),
-		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+		BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'Username' => 1, 'PandoraUsername' => 2, 'RealName' => 3, 'Email' => 4, 'Balance' => 5, 'Created' => 6, ),
+		BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'username' => 1, 'pandoraUsername' => 2, 'realName' => 3, 'email' => 4, 'balance' => 5, 'created' => 6, ),
+		BasePeer::TYPE_COLNAME => array (self::ID => 0, self::USERNAME => 1, self::PANDORA_USERNAME => 2, self::REAL_NAME => 3, self::EMAIL => 4, self::BALANCE => 5, self::CREATED => 6, ),
+		BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'USERNAME' => 1, 'PANDORA_USERNAME' => 2, 'REAL_NAME' => 3, 'EMAIL' => 4, 'BALANCE' => 5, 'CREATED' => 6, ),
+		BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'username' => 1, 'pandora_username' => 2, 'real_name' => 3, 'email' => 4, 'balance' => 5, 'created' => 6, ),
+		BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
 	);
 
 	/**
@@ -159,6 +162,7 @@ abstract class BaseUserPeer {
 		if (null === $alias) {
 			$criteria->addSelectColumn(UserPeer::ID);
 			$criteria->addSelectColumn(UserPeer::USERNAME);
+			$criteria->addSelectColumn(UserPeer::PANDORA_USERNAME);
 			$criteria->addSelectColumn(UserPeer::REAL_NAME);
 			$criteria->addSelectColumn(UserPeer::EMAIL);
 			$criteria->addSelectColumn(UserPeer::BALANCE);
@@ -166,6 +170,7 @@ abstract class BaseUserPeer {
 		} else {
 			$criteria->addSelectColumn($alias . '.ID');
 			$criteria->addSelectColumn($alias . '.USERNAME');
+			$criteria->addSelectColumn($alias . '.PANDORA_USERNAME');
 			$criteria->addSelectColumn($alias . '.REAL_NAME');
 			$criteria->addSelectColumn($alias . '.EMAIL');
 			$criteria->addSelectColumn($alias . '.BALANCE');

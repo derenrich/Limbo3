@@ -9,14 +9,24 @@
  * @method     DepositQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     DepositQuery orderByUserId($order = Criteria::ASC) Order by the user_id column
  * @method     DepositQuery orderByAmount($order = Criteria::ASC) Order by the amount column
+ * @method     DepositQuery orderByCreated($order = Criteria::ASC) Order by the created column
  *
  * @method     DepositQuery groupById() Group by the id column
  * @method     DepositQuery groupByUserId() Group by the user_id column
  * @method     DepositQuery groupByAmount() Group by the amount column
+ * @method     DepositQuery groupByCreated() Group by the created column
  *
  * @method     DepositQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     DepositQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method     DepositQuery innerJoin($relation) Adds a INNER JOIN clause to the query
+ *
+ * @method     DepositQuery leftJoinUser($relationAlias = null) Adds a LEFT JOIN clause to the query using the User relation
+ * @method     DepositQuery rightJoinUser($relationAlias = null) Adds a RIGHT JOIN clause to the query using the User relation
+ * @method     DepositQuery innerJoinUser($relationAlias = null) Adds a INNER JOIN clause to the query using the User relation
+ *
+ * @method     DepositQuery leftJoinBalanceLog($relationAlias = null) Adds a LEFT JOIN clause to the query using the BalanceLog relation
+ * @method     DepositQuery rightJoinBalanceLog($relationAlias = null) Adds a RIGHT JOIN clause to the query using the BalanceLog relation
+ * @method     DepositQuery innerJoinBalanceLog($relationAlias = null) Adds a INNER JOIN clause to the query using the BalanceLog relation
  *
  * @method     Deposit findOne(PropelPDO $con = null) Return the first Deposit matching the query
  * @method     Deposit findOneOrCreate(PropelPDO $con = null) Return the first Deposit matching the query, or a new Deposit object populated from the query conditions when no match is found
@@ -24,10 +34,12 @@
  * @method     Deposit findOneById(int $id) Return the first Deposit filtered by the id column
  * @method     Deposit findOneByUserId(int $user_id) Return the first Deposit filtered by the user_id column
  * @method     Deposit findOneByAmount(double $amount) Return the first Deposit filtered by the amount column
+ * @method     Deposit findOneByCreated(string $created) Return the first Deposit filtered by the created column
  *
  * @method     array findById(int $id) Return Deposit objects filtered by the id column
  * @method     array findByUserId(int $user_id) Return Deposit objects filtered by the user_id column
  * @method     array findByAmount(double $amount) Return Deposit objects filtered by the amount column
+ * @method     array findByCreated(string $created) Return Deposit objects filtered by the created column
  *
  * @package    propel.generator.limbo3.om
  */
@@ -214,6 +226,165 @@ abstract class BaseDepositQuery extends ModelCriteria
 			}
 		}
 		return $this->addUsingAlias(DepositPeer::AMOUNT, $amount, $comparison);
+	}
+
+	/**
+	 * Filter the query on the created column
+	 * 
+	 * @param     string|array $created The value to use as filter.
+	 *            Accepts an associative array('min' => $minValue, 'max' => $maxValue)
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    DepositQuery The current query, for fluid interface
+	 */
+	public function filterByCreated($created = null, $comparison = null)
+	{
+		if (is_array($created)) {
+			$useMinMax = false;
+			if (isset($created['min'])) {
+				$this->addUsingAlias(DepositPeer::CREATED, $created['min'], Criteria::GREATER_EQUAL);
+				$useMinMax = true;
+			}
+			if (isset($created['max'])) {
+				$this->addUsingAlias(DepositPeer::CREATED, $created['max'], Criteria::LESS_EQUAL);
+				$useMinMax = true;
+			}
+			if ($useMinMax) {
+				return $this;
+			}
+			if (null === $comparison) {
+				$comparison = Criteria::IN;
+			}
+		}
+		return $this->addUsingAlias(DepositPeer::CREATED, $created, $comparison);
+	}
+
+	/**
+	 * Filter the query by a related User object
+	 *
+	 * @param     User $user  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    DepositQuery The current query, for fluid interface
+	 */
+	public function filterByUser($user, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(DepositPeer::USER_ID, $user->getId(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the User relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    DepositQuery The current query, for fluid interface
+	 */
+	public function joinUser($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('User');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'User');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the User relation User object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    UserQuery A secondary query class using the current class as primary query
+	 */
+	public function useUserQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+	{
+		return $this
+			->joinUser($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'User', 'UserQuery');
+	}
+
+	/**
+	 * Filter the query by a related BalanceLog object
+	 *
+	 * @param     BalanceLog $balanceLog  the related object to use as filter
+	 * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+	 *
+	 * @return    DepositQuery The current query, for fluid interface
+	 */
+	public function filterByBalanceLog($balanceLog, $comparison = null)
+	{
+		return $this
+			->addUsingAlias(DepositPeer::ID, $balanceLog->getDepositId(), $comparison);
+	}
+
+	/**
+	 * Adds a JOIN clause to the query using the BalanceLog relation
+	 * 
+	 * @param     string $relationAlias optional alias for the relation
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    DepositQuery The current query, for fluid interface
+	 */
+	public function joinBalanceLog($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		$tableMap = $this->getTableMap();
+		$relationMap = $tableMap->getRelation('BalanceLog');
+		
+		// create a ModelJoin object for this join
+		$join = new ModelJoin();
+		$join->setJoinType($joinType);
+		$join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+		if ($previousJoin = $this->getPreviousJoin()) {
+			$join->setPreviousJoin($previousJoin);
+		}
+		
+		// add the ModelJoin to the current object
+		if($relationAlias) {
+			$this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+			$this->addJoinObject($join, $relationAlias);
+		} else {
+			$this->addJoinObject($join, 'BalanceLog');
+		}
+		
+		return $this;
+	}
+
+	/**
+	 * Use the BalanceLog relation BalanceLog object
+	 *
+	 * @see       useQuery()
+	 * 
+	 * @param     string $relationAlias optional alias for the relation,
+	 *                                   to be used as main alias in the secondary query
+	 * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+	 *
+	 * @return    BalanceLogQuery A secondary query class using the current class as primary query
+	 */
+	public function useBalanceLogQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+	{
+		return $this
+			->joinBalanceLog($relationAlias, $joinType)
+			->useQuery($relationAlias ? $relationAlias : 'BalanceLog', 'BalanceLogQuery');
 	}
 
 	/**
