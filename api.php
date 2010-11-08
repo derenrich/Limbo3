@@ -58,6 +58,11 @@ switch($action){
     }
     if(count($stock_count) > 0){
       $error = purchase($acting_user,$stock_count);
+      if (!$error) {
+	assert_key('amount', $_POST);
+	$amount = (double) $_POST['amount'];
+	$error = deposit($acting_user, $amount); 	 
+      }
     }
     break;
   default:

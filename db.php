@@ -20,9 +20,9 @@ function user_suggest($user){
 function stock_suggest($q) {
   $stocks = array();
   if (!empty($q)) {
-    $stock = StockQuery::create()->useItemQuery()->where('Item.Name like ?', "%". addslashes($q) ."%")->endUse()->where('not Stock.SoldOut')->find();
+    $stock = StockQuery::create()->useItemQuery()->where('Item.Name like ?', "%". addslashes($q) ."%")->endUse()->where('not Stock.SoldOut')->orderByCreated()->find();
   } else {
-    $stock = StockQuery::create()->where('not Stock.SoldOut')->find();
+    $stock = StockQuery::create()->where('not Stock.SoldOut')->orderByCreated()->find();
   }
   foreach($stock as $item){
     $entry = array();

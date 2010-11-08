@@ -16,6 +16,10 @@ if(!empty($username)) {
 $message = '';
 $error = false;
 if (array_key_exists('submit', $_POST)) {
+  if($_POST['submit'] == 'clear'){
+    
+  }
+  elseif($_POST['submit']=='stock'){
   assert_key('quantity', $_POST);
   assert_key('item', $_POST);
   assert_key('price', $_POST);
@@ -47,6 +51,7 @@ if (array_key_exists('submit', $_POST)) {
     $stock->setQuantity($quantity);
     $stock->save();
   }
+  }
 }
 
 ?>
@@ -68,7 +73,7 @@ $(document).ready(function() {
     echo "<h2> History </h2>\n";
   }
   echo "<table>";
-  echo "<tr><th>Name</th><th>Date</th><th>Price</th><th>Sales</th><th>Income</th></tr>";
+  echo "<tr><th>Name</th><th>Date</th><th>Price</th><th>Sales</th><th>Income</th><th>Clear Stock</th></tr>";
   foreach($stocks as $stock) { ?>
     <tr>
     <td><?= $stock->getItem()->getName() ?> </td>
@@ -76,6 +81,18 @@ $(document).ready(function() {
     <td><?= format_currency($stock->getPrice()) ?> </td>
     <td><?= $stock->getSold() ?>/<?=$stock->getQuantity() ?> </td>
     <td><?= format_currency((double)($stock->getPrice() * $stock->getSold())) ?></td>
+    <td>
+      <?php if(!$stock->getSoldOut()){ ?>
+      <center>
+      <form method="post">
+        <input type="hidden" name="action" value="clear" />
+        <input type="hidden" value="true" name="submit" />
+        <input type="hidden" value="<?= $stock->getId() ?>"
+        <input type="submit" value="X" />
+      </form>
+      </center>
+      <?php } ?>
+    </td>
     </tr>
   <?php
   }
@@ -95,6 +112,7 @@ I'd like to stock
 $<input type="number" name="price" min="0" max="100" step="0.01">
 
 <input type="hidden" value="<?=$user->getId() ?>" name="acting_user" /> 
+<input type="hidden" name="action" value="stock" />
 <input type="hidden" value="true" name="submit" />
 <br />
 <input value="¡Viva Capitalismo!" class="submit" type="Submit"/>

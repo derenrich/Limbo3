@@ -34,7 +34,8 @@ $(document).ready(function() {
 
 function PriceWarning(){
   var total_text = $('span#total').html();
-  if(parseFloat(total_text)==0) {
+  // we should've done this with ints...
+  if(parseFloat(total_text) == 0) {
     alert("Dude, you didn't buy anything. Click. harder. pussy.");
     return false;
   } else {
