@@ -16,10 +16,9 @@ if(!empty($username)) {
 $message = '';
 $error = false;
 if (array_key_exists('submit', $_POST)) {
-  if($_POST['submit'] == 'clear'){
-    
-  }
-  elseif($_POST['submit']=='stock'){
+  //if($_POST['submit'] == 'clear'){    
+  //}
+  if($_POST['submit']=='stock'){
   assert_key('quantity', $_POST);
   assert_key('item', $_POST);
   assert_key('price', $_POST);
@@ -113,7 +112,7 @@ $<input type="number" name="price" min="0" max="100" step="0.01">
 
 <input type="hidden" value="<?=$user->getId() ?>" name="acting_user" /> 
 <input type="hidden" name="action" value="stock" />
-<input type="hidden" value="true" name="submit" />
+<input type="hidden" value="stock" name="submit" />
 <br />
 <input value="¡Viva Capitalismo!" class="submit" type="Submit"/>
 
