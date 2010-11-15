@@ -36,28 +36,32 @@ function parse_item($item_id) {
 function deposit($user, $amount) {
   //transactional
   //negative for withdraw
-  $con = Propel::getConnection(UserPeer::DATABASE_NAME);
-  $con->beginTransaction();
-  try {
-    $new_balance = $user->getBalance() + $amount;
-    $user->setBalance($new_balance);
-    $user->save($con);
-    $d = new Deposit();	
-    $d->setUser($user);
-    $d->setAmount($amount);
-    $d->save($con);
-    $bl = new BalanceLog();
-    $bl->setUser($user);
-    $bl->setNewBalance($new_balance);
-    $bl->setDeposit($d);
-    $bl->save($con);
-    $con->commit();
-  } catch (Exception $e) {
-    $con->rollback();
-    throw $e;
-    return true;
+  // terrible double comparison...whoops
+  if ($amount != 0.0) {
+    $con = Propel::getConnection(UserPeer::DATABASE_NAME);
+    $con->beginTransaction();
+    try {
+      $new_balance = $user->getBalance() + $amount;
+      $user->setBalance($new_balance);
+      $user->save($con);
+      $d = new Deposit();	
+      $d->setUser($user);
+      $d->setAmount($amount);
+      $d->save($con);
+      $bl = new BalanceLog();
+      $bl->setUser($user);
+      $bl->setNewBalance($new_balance);
+      $bl->setDeposit($d);
+      $bl->save($con);
+      $con->commit();
+    } catch (Exception $e) {
+      $con->rollback();
+      throw $e;
+      return true;
+    }
   }
   return false;
+  
 }
 
 
