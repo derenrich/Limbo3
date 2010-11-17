@@ -63,3 +63,11 @@ table#admin {
   margin-right: auto;
   text-align: left;
 }
+
+.negative {
+  color: red;
+}
+
+.positive {
+  color: #abff00;
+}

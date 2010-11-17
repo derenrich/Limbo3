@@ -53,6 +53,26 @@ if (array_key_exists('submit', $_POST)) {
   }
 }
 
+// This is a hack; we should add a "last_sale" member to the stock
+// class so we don't have to loop over all sales to compute this.
+if (!empty($seller_id)) {
+  $stock = StockQuery::create()->findByUserId($seller_id);
+  foreach ($stock as $stock_item)  {
+    $last_sale = $stock_item->getCreated();
+    $purchases = $stock_item->getPurchases();
+    foreach ($purchases as $purchase) {
+        $purchase_date = $purchase->getCreated();
+        if ($purchase_date > $last_sale) {
+            $last_sale = $purchase_date;
+        }
+    }
+    // Convert timestamps from strings so we can compute the difference
+    $sales_period = strtotime($last_sale) - strtotime($stock_item->getCreated());
+    $sales_array[] = array($stock_item, $sales_period);
+  }
+}
+
+
 ?>
 <?php include( 'templates/header.php'); ?>
 
@@ -72,7 +92,7 @@ $(document).ready(function() {
     echo "<h2> History </h2>\n";
   }
   echo "<table>";
-  echo "<tr><th>Name</th><th>Date</th><th>Price</th><th>Sales</th><th>Income</th><th>Clear Stock</th></tr>";
+  echo "<tr><th>Name</th><th>Date</th><th>Price</th><th>Sales</th><th>Income</th><th>$/day</th><th>Clear Stock</th></tr>";
   foreach($stocks as $stock) { ?>
     <tr>
     <td><?= $stock->getItem()->getName() ?> </td>
@@ -80,6 +100,7 @@ $(document).ready(function() {
     <td><?= format_currency($stock->getPrice()) ?> </td>
     <td><?= $stock->getSold() ?>/<?=$stock->getQuantity() ?> </td>
     <td><?= format_currency((double)($stock->getPrice() * $stock->getSold())) ?></td>
+        <td><?= format_currency(($stock[0]->getPrice() * $stock[0]->getSold())/$stock[1]*86400) ?> </td>
     <td>
       <?php if(!$stock->getSoldOut()){ ?>
       <center>

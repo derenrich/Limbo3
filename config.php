@@ -19,10 +19,13 @@ function format_currency($val) {
   $val = round($val, 2);
   if ($val < 0) {
     $val = abs($val);
-    return sprintf("($%.2f)",$val);
+    $format_val =  sprintf("($%.2f)",$val);
+    $format_val = "<span class='negative'>". $format_val . "</span>";
   } else {
-    return sprintf("$%.2f",$val);    
+    $format_val = sprintf("$%.2f",$val);    
+    $format_val = "<span class='positive'>". $format_val . "</span>";
   }
+  return $format_val;
 }
 
 
