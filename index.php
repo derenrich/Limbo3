@@ -29,11 +29,21 @@ $(document).ready(function() {
 <br />
 (<a href="register.php">what? you haven't heard of me?</a>)
 <?php 
-// Get the head of the list of users, ordered by increasing balance
-$worst_user = UserQuery::create()->orderByBalance()->findOne();
+// Get the iterator of users, ordered by increasing balance
+$users_by_balance = UserQuery::create()->orderByBalance()->find();
 
+// Randomly select one of the five worst debtors
+$random = rand(0,4);
+// Using next() to select $users_by_balance[$random]
+for ($i=0;$i<$random;$i++) {
+	next($users_by_balance);
+}
+// Copy the selected user for convenience
+$worst_user = current($users_by_balance);
+
+// Only complain if their balance is < 0; should (almost) always execute
 if ($worst_user->getBalance() < 0) {
-	echo "<h2>Fun fact: ",$worst_user->getUsername(),"'s debt is ",$worst_user->getBalance(),"</h2>";
+	echo "<h2>Fun fact: ",$worst_user->getUsername(),"'s debt is ",format_currency($worst_user->getBalance()),"</h2>";
 }
 ?>
 (<a href="wall_of_shame.php">why is limbo harassing me?</a>)
