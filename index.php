@@ -28,8 +28,16 @@ $(document).ready(function() {
 </div>
 <br />
 (<a href="register.php">what? you haven't heard of me?</a>)
+<?php 
+// Get the head of the list of users, ordered by increasing balance
+$worst_user = UserQuery::create()->orderByBalance()->findOne();
+
+if ($worst_user->getBalance() < 0) {
+	echo "<h2>Fun fact: ",$worst_user->getUsername(),"'s debt is ",$worst_user->getBalance(),"</h2>";
+}
+?>
+(<a href="wall_of_shame.php">why is limbo harassing me?</a>)
+
 </center>
-
-
 <?php include( 'templates/footer.php'); ?>
 
