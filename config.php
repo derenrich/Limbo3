@@ -2,7 +2,7 @@
 
 global $path, $domain;
 $path = "/limbo3/";
-$domain = "http://glados.caltech.edu";
+$domain = "http://blacker.caltech.edu";
 
 function redirect($message='', $page='') {
   global $domain, $path;
