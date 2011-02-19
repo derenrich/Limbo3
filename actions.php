@@ -8,6 +8,8 @@ function assert_key($key, $arr) {
 }
 
 function mail_users($from,$to,$amount,$reason) {
+  $headers = 'From: limbo@blacker.caltech.edu' . "\r\n" . 'Reply-To: limbo@blacker.caltech.edu' . "\r\n" . 'X-Mailer: PHP/' . phpversion();
+
   $from_real_name = $from->getRealName();
   if ($from_real_name == "") {
     $from_real_name = $from->getUsername();
@@ -19,12 +21,14 @@ function mail_users($from,$to,$amount,$reason) {
   if ($from->getEmail() != "") {
     $subject = "[Limbo] Transfer Notification";
     $body = "Hi " . $from_real_name . ",\n\nA transfer of " . $amount . " dollars has been initiated from you to " . $to_real_name . " for the reason:\n\t\"" . $reason . "\"\n\nYour balance is now " . format_currency($from->getBalance()) . ".\n\nSincerely,\nLimbo";
-    mail($from->getEmail(),$subject,$body);
+    mail($from->getEmail(),$subject,$body,$headers);
   }
-  if ($to->getEmail() != "") {
-    $subject = "[Limbo] Transfer Notification";
-    $body = "Hi " . $to_real_name . ",\n\nA transfer of " . $amount . " dollars has been initiated to you from " . $from_real_name . " for the reason:\n\t\"" . $reason . "\"\n\nYour balance is now " . format_currency($to->getBalance()) . ".\n\nSincerely,\nLimbo";
-    mail($from->getEmail(),$subject,$body);
+  if ($from->getEmail() != $to->getEmail()) {
+    if ($to->getEmail() != "") {
+      $subject = "[Limbo] Transfer Notification";
+      $body = "Hi " . $to_real_name . ",\n\nA transfer of " . $amount . " dollars has been initiated to you from " . $from_real_name . " for the reason:\n\t\"" . $reason . "\"\n\nYour balance is now " . format_currency($to->getBalance()) . ".\n\nSincerely,\nLimbo";
+      mail($to->getEmail(),$subject,$body,$headers);
+    }
   }
 }
 
@@ -137,7 +141,6 @@ function purchase($user, $items) {
     foreach($items as $item) {
       $stock = $item[0];
       $count = $item[1];
-      $option_list = OptionQuery::create()->findByUserId($user);
       $item_obj = $stock->getItem();
       $stock_quantity = $stock->getQuantity() - $stock->getSold();
       if ($stock_quantity < $count) {
@@ -157,15 +160,6 @@ function purchase($user, $items) {
 	$stock->setSoldOut(true);
       }
       $stock->save();
-      foreach ($option_list as $option) {
-        if ($option->getItem() == $item_obj && $option->getPrice() >= $stock->getPrice()) {
-          $option->setSold($option->getSold() + $count);
-          if ($option->getQuantity() == $option->getSold()) {
-            $option->setSoldOut(true);
-          }
-          $option->save();
-        }
-      }
       $total_price += $cost;
     }
     // deal w/ the money
