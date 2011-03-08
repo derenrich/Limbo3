@@ -133,7 +133,6 @@ function transfer($from, $to, $amount,$reason) {
 function purchase($user, $items) {
   $con = Propel::getConnection(PurchasePeer::DATABASE_NAME);
   $con->beginTransaction();
-  $total_price = 0;
   try {
     foreach($items as $item) {
       $stock = $item[0];
@@ -158,7 +157,9 @@ function purchase($user, $items) {
       }
       $stock->save();
 
-      // log this purchase
+      // deal w/ the users' money
+      $user->setBalance($user->getBalance() - $cost);
+      $user->save();
       $bl = new BalanceLog();
       $bl->setUser($user);
       $bl->setNewBalance($user->getBalance());
@@ -167,18 +168,16 @@ function purchase($user, $items) {
 
       // log the sellers actions
       $owner = $stock->getUser();
-      $owner->setBalance($owner->getBalance() + $total_price);
+      $owner->setBalance($owner->getBalance() + $cost);
       $owner->save();
       $bl = new BalanceLog();
       $bl->setUser($owner);
       $bl->setNewBalance($owner->getBalance());
       $bl->setSale($purchase);
       $bl->save();
-      $total_price += $cost;
+
     }
-    // deal w/ the users' money
-    $user->setBalance($user->getBalance() - $total_price);
-    $user->save();
+
 
     $con->commit();
   } catch (Exception $e) {
