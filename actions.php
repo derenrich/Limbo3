@@ -138,7 +138,6 @@ function purchase($user, $items) {
     foreach($items as $item) {
       $stock = $item[0];
       $count = $item[1];
-     // $option_list = OptionQuery::create()->findByUserId($user);
       $item_obj = $stock->getItem();
       $stock_quantity = $stock->getQuantity() - $stock->getSold();
       if ($stock_quantity < $count) {
@@ -158,28 +157,28 @@ function purchase($user, $items) {
 	$stock->setSoldOut(true);
       }
       $stock->save();
+
+      // log this purchase
+      $bl = new BalanceLog();
+      $bl->setUser($user);
+      $bl->setNewBalance($user->getBalance());
+      $bl->setPurchase($purchase);
+      $bl->save();
+
+      // log the sellers actions
+      $owner = $stock->getUser();
+      $owner->setBalance($owner->getBalance() + $total_price);
+      $owner->save();
+      $bl = new BalanceLog();
+      $bl->setUser($owner);
+      $bl->setNewBalance($owner->getBalance());
+      $bl->setSale($purchase);
+      $bl->save();
       $total_price += $cost;
     }
     // deal w/ the users' money
     $user->setBalance($user->getBalance() - $total_price);
     $user->save();
-
-
-    // log the money
-    $bl = new BalanceLog();
-    $bl->setUser($user);
-    $bl->setNewBalance($user->getBalance());
-    $bl->setPurchase($purchase);
-    $bl->save();
-
-    $bl = new BalanceLog();
-    $bl->setUser($owner);
-    $bl->setNewBalance($owner->getBalance());
-    $bl->setSale($purchase);
-    $bl->save();
-    $owner = $stock->getUser();
-    $owner->setBalance($owner->getBalance() + $total_price);
-    $owner->save();
 
     $con->commit();
   } catch (Exception $e) {
