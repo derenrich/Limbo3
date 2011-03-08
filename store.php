@@ -9,11 +9,16 @@ if(!empty($username)) {
   $user = UserQuery::create()->findOneByUsername($username);
   if (is_null($user)) {
     redirect("i've never heard of you before",'register.php');
+  } elseif($user->getEmail() == "") {
+    redirect_no_message('get_email.php?username=' . $username);
   }
 } else {
   redirect();
 }
 
+if($user->getEmail() == "") {
+  redirect("",'get_email.php?username=' . $username);
+}
 
 ?>
 <?php include( 'templates/header.php'); ?>
@@ -36,7 +41,7 @@ function PriceWarning(){
   var total_text = $('span#total').html();
   // we should've done this with ints...
   if(parseFloat(total_text) == 0) {
-    alert("Dude, you didn't buy anything. Click. harder. pussy.");
+    alert("Dude, you didn't buy anything.");
     return false;
   } else {
     return true;

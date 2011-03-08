@@ -55,8 +55,8 @@ if (array_key_exists('submit', $_POST)) {
 
 // This is a hack; we should add a "last_sale" member to the stock
 // class so we don't have to loop over all sales to compute this.
-if (!empty($seller_id)) {
-  $stock = StockQuery::create()->findByUserId($seller_id);
+if (!empty($user)) {
+  $stock = $user->getStocks();
   foreach ($stock as $stock_item)  {
     $last_sale = $stock_item->getCreated();
     $purchases = $stock_item->getPurchases();
@@ -93,14 +93,18 @@ $(document).ready(function() {
   }
   echo "<table>";
   echo "<tr><th>Name</th><th>Date</th><th>Price</th><th>Sales</th><th>Income</th><th>$/day</th><th>Clear Stock</th></tr>";
-  foreach($stocks as $stock) { ?>
+  if (count($sales_array) > 0) {
+  foreach($sales_array as $sale) { 
+    $stock = $sale[0];
+    $time = $sale[1];?>
     <tr>
     <td><?= $stock->getItem()->getName() ?> </td>
     <td><?= $stock->getCreated() ?> </td>
     <td><?= format_currency($stock->getPrice()) ?> </td>
     <td><?= $stock->getSold() ?>/<?=$stock->getQuantity() ?> </td>
     <td><?= format_currency((double)($stock->getPrice() * $stock->getSold())) ?></td>
-        <td><?= format_currency(($stock[0]->getPrice() * $stock[0]->getSold())/$stock[1]*86400) ?> </td>
+    <td><?= $time != 0 ? format_currency(($stock->getPrice() * 
+$stock->getSold())/$time*86400) : format_currency(0) ?> </td>
     <td>
       <?php if(!$stock->getSoldOut()){ ?>
       <center>
@@ -115,6 +119,7 @@ $(document).ready(function() {
     </td>
     </tr>
   <?php
+  }
   }
   echo "</table>\n";
 ?>

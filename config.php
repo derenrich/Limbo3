@@ -11,6 +11,12 @@ function redirect($message='', $page='') {
   exit;
 }
 
+function redirect_no_message($page='') {
+  global $domain, $path;
+  header("Location: $domain$path$page");
+  exit;
+}
+
 function quote($str){
   return '"' . $str . '"';
 }
@@ -19,13 +25,10 @@ function format_currency($val) {
   $val = round($val, 2);
   if ($val < 0) {
     $val = abs($val);
-    $format_val =  sprintf("($%.2f)",$val);
-    $format_val = "<span class='negative'>". $format_val . "</span>";
+    return sprintf("($%.2f)",$val);
   } else {
-    $format_val = sprintf("$%.2f",$val);    
-    $format_val = "<span class='positive'>". $format_val . "</span>";
+    return sprintf("$%.2f",$val);    
   }
-  return $format_val;
 }
 
 
@@ -49,5 +52,27 @@ function plot($points) {
   $x = rtrim($x,",");
   return "<img src='http://chart.apis.google.com/chart?chs=500x200&chf=bg,s,00000000&cht=lxy&chd=t:$x|$data&chxt=x,y&chxr=0,0,23,2'/>";
 }
+
+function weekplot($points) {
+  $hist = array(0=>0, 1=>0, 2=>0, 3=>0, 4=>0, 5=>0, 6=>0);
+  foreach($points as $p) {
+    $time = new DateTime($p->getCreated(), new DateTimeZone('UTC')); 
+    $time->setTimezone(new DateTimeZone('America/Los_Angeles'));
+    $day_of_week = (int) $time->format("W");
+    $hist[$day_of_week] += 1;
+  }
+  $max_count =  max($hist);
+  $max_count = max($max_count, 1);
+  $data = '';
+  $x = '';
+  for($i=0; $i<7; $i++) {
+    $x .= (((float) $i) / 6.0 * 100) .",";
+    $data .= ((100* (((float) $hist[$i]) /$max_count))) .",";
+  }
+  $data = rtrim($data,",");
+  $x = rtrim($x,",");
+  return "<img src='http://chart.apis.google.com/chart?chs=500x200&chf=bg,s,00000000&cht=lxy&chd=t:$x|$data&chxt=x,y&chxr=0,0,6,2'/>";
+}
+
 
 ?>

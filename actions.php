@@ -7,6 +7,30 @@ function assert_key($key, $arr) {
   }
 }
 
+function mail_users($from,$to,$amount,$reason) {
+  $headers = 'From: limbo@blacker.caltech.edu' . "\r\n" . 'Reply-To: limbo@blacker.caltech.edu' . "\r\n" . 'X-Mailer: PHP/' . phpversion();
+
+  $from_real_name = $from->getRealName();
+  if ($from_real_name == "") {
+    $from_real_name = $from->getUsername();
+  }
+  $to_real_name = $to->getRealName();
+  if ($to_real_name == "") {
+    $to_real_name = $to->getUsername();
+  }
+  if ($from->getEmail() != "") {
+    $subject = "[Limbo] Transfer Notification";
+    $body = "Hi " . $from_real_name . ",\n\nA transfer of " . $amount . " dollars has been initiated from you to " . $to_real_name . " for the reason:\n\t\"" . $reason . "\"\n\nYour balance is now " . format_currency($from->getBalance()) . ".\n\nSincerely,\nLimbo";
+    mail($from->getEmail(),$subject,$body,$headers);
+  }
+  if ($from->getEmail() != $to->getEmail()) {
+    if ($to->getEmail() != "") {
+      $subject = "[Limbo] Transfer Notification";
+      $body = "Hi " . $to_real_name . ",\n\nA transfer of " . $amount . " dollars has been initiated to you from " . $from_real_name . " for the reason:\n\t\"" . $reason . "\"\n\nYour balance is now " . format_currency($to->getBalance()) . ".\n\nSincerely,\nLimbo";
+      mail($to->getEmail(),$subject,$body,$headers);
+    }
+  }
+}
 
 function parse_user($user_id) {
   $user = null;
@@ -44,7 +68,7 @@ function deposit($user, $amount) {
       $new_balance = $user->getBalance() + $amount;
       $user->setBalance($new_balance);
       $user->save($con);
-      $d = new Deposit();	
+      $d = new Deposit();
       $d->setUser($user);
       $d->setAmount($amount);
       $d->save($con);
@@ -61,7 +85,7 @@ function deposit($user, $amount) {
     }
   }
   return false;
-  
+
 }
 
 
@@ -97,6 +121,7 @@ function transfer($from, $to, $amount,$reason) {
     $bl->save($con);
 
     $con->commit();
+    mail_users($from,$to,$amount,$reason);
   } catch (Exception $e) {
     $con->rollback();
     throw $e;
@@ -116,6 +141,7 @@ function purchase($user, $items) {
     foreach($items as $item) {
       $stock = $item[0];
       $count = $item[1];
+     // $option_list = OptionQuery::create()->findByUserId($user);
       $item_obj = $stock->getItem();
       $stock_quantity = $stock->getQuantity() - $stock->getSold();
       if ($stock_quantity < $count) {
@@ -165,4 +191,5 @@ function purchase($user, $items) {
   }
   return false;
 }
+
 ?>

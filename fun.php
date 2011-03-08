@@ -27,7 +27,29 @@ $purchases = TransferQuery::create()->find();
 $plot = plot($purchases);
 echo $plot;
 ?>
+
+<h2> Purchasing Time Frequencies by Day of Week </h2>
+<?php
+$purchases = PurchaseQuery::create()->find();
+$plot = weekplot($purchases);
+echo $plot;
+?>
+
+<h2> Restocking Time Frequencies by Day of Week </h2>
+<?php
+$purchases = StockQuery::create()->find();
+$plot = weekplot($purchases);
+echo $plot;
+?>
+
+<h2> Transfer Time Frequencies by Day of Week </h2>
+<?php
+$purchases = TransferQuery::create()->find();
+$plot = weekplot($purchases);
+echo $plot;
+?>
 </center>
+
 
 <?php include( 'templates/footer.php'); ?>
 

@@ -31,7 +31,7 @@ function stock_suggest($q) {
     $entry['value'] = (string) $item->getItem()->getName();
     $entry['price'] = (string) $item->getPrice();
     $entry['quantity'] = (string) ($item->getQuantity() - $item->getSold());
-    $entry['text'] =  $entry['value'] . " at ".format_currency($entry['price'])."";
+    $entry['text'] =  $entry['value'] . " [" . $entry['quantity'] . "]" . " at ".format_currency($entry['price'])."";
     $stocks[] = $entry;
   }
   return $stocks;
