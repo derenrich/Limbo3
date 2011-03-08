@@ -13,7 +13,7 @@ if (is_null($acting_user)) {
 }
 
 if($maintenance) {
-  echo "Error: Limbo is in maintenance mode. "
+  echo "Error: Limbo is in maintenance mode. ";
   die;
 }
 
