@@ -91,7 +91,6 @@ function deposit($user, $amount) {
 
 function transfer($from, $to, $amount,$reason) {
   //transactional
-  //negative for withdraw
   $con = Propel::getConnection(UserPeer::DATABASE_NAME);
   $con->beginTransaction();
   try {
@@ -132,8 +131,6 @@ function transfer($from, $to, $amount,$reason) {
 
 
 function purchase($user, $items) {
-  //transactional
-  //negative for withdraw
   $con = Propel::getConnection(PurchasePeer::DATABASE_NAME);
   $con->beginTransaction();
   $total_price = 0;
@@ -162,12 +159,10 @@ function purchase($user, $items) {
       $stock->save();
       $total_price += $cost;
     }
-    // deal w/ the money
+    // deal w/ the users' money
     $user->setBalance($user->getBalance() - $total_price);
     $user->save();
-    $owner = $stock->getUser();
-    $owner->setBalance($owner->getBalance() + $total_price);
-    $owner->save();
+
 
     // log the money
     $bl = new BalanceLog();
@@ -181,6 +176,9 @@ function purchase($user, $items) {
     $bl->setNewBalance($owner->getBalance());
     $bl->setSale($purchase);
     $bl->save();
+    $owner = $stock->getUser();
+    $owner->setBalance($owner->getBalance() + $total_price);
+    $owner->save();
 
     $con->commit();
   } catch (Exception $e) {
