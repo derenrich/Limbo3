@@ -13,7 +13,7 @@
       <datasource id="limbo3">
         <adapter>sqlite</adapter> <!-- sqlite, mysql, myssql, oracle, or pgsql -->
         <connection>
-          <dsn>sqlite:/var/local/blacker/web/limbo3/limbo3</dsn>
+          <dsn>sqlite:/path/to/sqlite3/db</dsn>
         </connection>
       </datasource>
     </datasources>

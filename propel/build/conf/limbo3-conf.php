@@ -9,7 +9,7 @@ $conf = array (
       'adapter' => 'sqlite',
       'connection' => 
       array (
-        'dsn' => 'sqlite:/var/local/blacker/web/limbo3/limbo3',
+        'dsn' => 'sqlite:/path/to/sqlite3/db',
       ),
     ),
     'default' => 'limbo3',

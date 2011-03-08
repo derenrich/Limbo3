@@ -4,7 +4,7 @@ global $path, $domain;
 global $maintenance;
 
 $path = "/limbo3/";
-$domain = "http://blacker.caltech.edu";
+$domain = "http://localhost";
 $maintenance = false;
 
 function redirect($message='', $page='') {
