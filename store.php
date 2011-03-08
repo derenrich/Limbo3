@@ -4,6 +4,8 @@ $username = $_GET['username'];
 require_once( 'db.php');
 require('config.php');
 
+global $maintenance;
+
 if(!empty($username)) {
   // check if the user is a thing
   $user = UserQuery::create()->findOneByUsername($username);
@@ -18,6 +20,11 @@ if(!empty($username)) {
 
 if($user->getEmail() == "") {
   redirect("",'get_email.php?username=' . $username);
+}
+
+if($maintenance) {
+  echo "Error: Limbo is in maintenance mode.";
+  die;
 }
 
 ?>
@@ -158,6 +165,11 @@ I want to withdraw $<input type="number" name="amount" />.
 <tr>
 <td colspan="2">
 <a href="stock.php?acting_user=<?=$user->getId()?>">Manage stock.</a>
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<a href="option.php?acting_user=<?=$user->getId()?>">Manage options.</a>
 </td>
 </tr>
 

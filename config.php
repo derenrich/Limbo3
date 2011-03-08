@@ -1,8 +1,11 @@
 <?php
 
 global $path, $domain;
+global $maintenance;
+
 $path = "/limbo3/";
 $domain = "http://blacker.caltech.edu";
+$maintenance = true;
 
 function redirect($message='', $page='') {
   global $domain, $path;

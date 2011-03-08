@@ -30,7 +30,9 @@ if(!empty($_POST['submit']) && !empty($_POST['email'])) {
 
 <center>
 <h1> We need your email address </h1>
+
 <h2> We will notify you when a transfer<br />to/from your account takes place </h2>
+
 <form method="post">
 
 <label for="email">my email address is </label>  <input name="email" type="text" />

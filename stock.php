@@ -93,6 +93,7 @@ $(document).ready(function() {
   }
   echo "<table>";
   echo "<tr><th>Name</th><th>Date</th><th>Price</th><th>Sales</th><th>Income</th><th>$/day</th><th>Clear Stock</th></tr>";
+
   if (count($sales_array) > 0) {
   foreach($sales_array as $sale) { 
     $stock = $sale[0];

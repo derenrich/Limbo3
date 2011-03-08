@@ -12,6 +12,11 @@ if (is_null($acting_user)) {
   die;
 }
 
+if($maintenance) {
+  echo "Error: Limbo is in maintenance mode. "
+  die;
+}
+
 $action = $_POST['action'];
 $error= false;
 switch($action){

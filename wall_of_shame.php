@@ -10,28 +10,42 @@ require_once('actions.php');
 <h2> Wall O' Shame </h2>
 <?php
 
-// Get list of all users
-$users = UserQuery::create()->orderByBalance()->find();
 
-$debt_sum = 0;
+// Comparison function for uasort()
+function cmp($a, $b) {
+    if (($a->getBalance()) > ($b->getBalance())) {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+// Get list of all users
+$users = UserQuery::create()->find();
+$user_list = array();
+foreach ($users as $user) {
+    // Add them to an array because PHP was complaining
+    $user_list[] = $user;
+}
+
+// Sort $user_list
+uasort($user_list, 'cmp');
+
 
 // Make table and column headers
 echo "<table>";
 echo "<tr><th>Name</th><th>Debt</th></tr>"; 
-foreach ($users as $user) {
+
+foreach ($user_list as $user) {
     // Only bitch at users if they actually owe us money
-    if ($user->getBalance() < 0) {
-        $debt_sum += $user->getBalance(); ?>
+    if ($user->getBalance() < 0) { ?>
         <tr>
         <td><?= $user->getUsername() ?> </td>
-        <td><?= format_currency($user->getBalance()) ?> </td>
+        <td><?= $user->getBalance() ?> </td>
         </tr> <?php
     }
 }
 
-$debt_sum = format_currency($debt_sum);
-
-echo "<h3>Sum of debt: $debt_sum</h3>";
 ?>
 
 </center>
