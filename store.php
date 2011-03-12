@@ -167,12 +167,6 @@ I want to withdraw $<input type="number" name="amount" />.
 <a href="stock.php?acting_user=<?=$user->getId()?>">Manage stock.</a>
 </td>
 </tr>
-<tr>
-<td colspan="2">
-<a href="option.php?acting_user=<?=$user->getId()?>">Manage options.</a>
-</td>
-</tr>
-
 </table>
 </td>
 </tr>
